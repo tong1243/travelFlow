@@ -1,0 +1,26 @@
+[
+  {
+    "id": "case-001",
+    "question": "帮我规划一次杭州3天2晚轻松游，预算5000元，两个人",
+    "topK": 5,
+    "sourceType": "",
+    "sourceRefContains": "",
+    "expectedKeywords": ["杭州", "行程", "预算", "交通", "注意"]
+  },
+  {
+    "id": "case-002",
+    "question": "清明去苏州看园林，带老人，想避开人流，怎么安排？",
+    "topK": 5,
+    "sourceType": "",
+    "sourceRefContains": "",
+    "expectedKeywords": ["苏州", "老人", "错峰", "路线", "风险"]
+  },
+  {
+    "id": "case-003",
+    "question": "给我一个成都美食+景点的4天行程，预算中等",
+    "topK": 5,
+    "sourceType": "",
+    "sourceRefContains": "",
+    "expectedKeywords": ["成都", "美食", "景点", "预算", "建议"]
+  }
+]

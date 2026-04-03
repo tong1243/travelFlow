@@ -21,6 +21,11 @@ const {
   budget,
   companionType,
   travelStyle,
+  useAgentMode,
+  ragSourceType,
+  ragSourceRefContains,
+  ragReferences,
+  agentToolTraces,
   refreshSuggestions,
   onFocusSearch,
   onBlurSearch,
@@ -187,7 +192,7 @@ function normalizeDateQuery(text: string): string {
           <div class="assistant-pending-line">{{ pendingPlan.label }}</div>
           <div class="pending-actions">
             <el-button type="primary" round :loading="isLoading" :disabled="!isLoggedIn" @click="confirmPendingPlan">
-              确认生成方案
+              确认生成{{ useAgentMode ? 'Agent' : 'RAG' }}方案
             </el-button>
             <el-button round :disabled="isLoading" @click="clearPendingPlan">取消</el-button>
           </div>
@@ -282,12 +287,41 @@ function normalizeDateQuery(text: string): string {
                 </el-select>
               </el-form-item>
             </el-col>
+            <el-col :xs="24" :sm="12" :md="6">
+              <el-form-item label="Agent 模式">
+                <el-switch
+                  v-model="useAgentMode"
+                  inline-prompt
+                  active-text="开启"
+                  inactive-text="关闭"
+                  @change="clearAssistantError"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="9">
+              <el-form-item label="知识来源类型（可选）">
+                <el-input
+                  v-model="ragSourceType"
+                  placeholder="例如：guide / policy / note"
+                  @input="clearAssistantError"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="9">
+              <el-form-item label="来源标识包含（可选）">
+                <el-input
+                  v-model="ragSourceRefContains"
+                  placeholder="例如：hangzhou / westlake"
+                  @input="clearAssistantError"
+                />
+              </el-form-item>
+            </el-col>
           </el-row>
         </el-form>
 
         <div v-if="!pendingPlan || canRetryGeneration || isLoading" class="assistant-actions">
           <el-button v-if="!pendingPlan" type="primary" round :loading="isLoading" :disabled="!isLoggedIn" @click="confirmPendingPlan">
-            确认生成方案
+            确认生成{{ useAgentMode ? 'Agent' : 'RAG' }}方案
           </el-button>
           <el-button v-if="canRetryGeneration && !isLoading" round @click="retryGeneration">重试生成</el-button>
           <el-button v-if="isLoading" type="danger" plain round @click="stopGeneration">停止生成</el-button>
@@ -316,6 +350,36 @@ function normalizeDateQuery(text: string): string {
             title="当前结果未保存，可点击“保存到我的行程”后继续编辑。"
           />
           <div class="result-content" v-html="renderedAnswerHtml"></div>
+        </el-card>
+
+        <el-card v-if="ragReferences.length > 0" shadow="never" class="result-block">
+          <template #header>
+            <strong>检索引用</strong>
+          </template>
+          <div class="rag-reference-list">
+            <div v-for="(item, index) in ragReferences" :key="`${item.chunkId}-${index}`" class="rag-reference-item">
+              <p class="rag-reference-title">[{{ index + 1 }}] {{ item.documentTitle }}</p>
+              <p class="rag-reference-meta">
+                sourceType={{ item.sourceType || 'N/A' }} · sourceRef={{ item.sourceRef || 'N/A' }} ·
+                score={{ item.score.toFixed(4) }} · vector={{ item.vectorScore.toFixed(4) }} ·
+                lexical={{ item.lexicalScore.toFixed(4) }} · rerank={{ item.rerankScore.toFixed(4) }}
+              </p>
+              <p class="rag-reference-snippet">{{ item.snippet }}</p>
+            </div>
+          </div>
+        </el-card>
+
+        <el-card v-if="agentToolTraces.length > 0" shadow="never" class="result-block">
+          <template #header>
+            <strong>Agent 工具轨迹</strong>
+          </template>
+          <ol class="agent-trace-list">
+            <li v-for="trace in agentToolTraces" :key="`${trace.step}-${trace.toolName}`">
+              <p class="agent-trace-title">Step {{ trace.step }} · {{ trace.toolName }}</p>
+              <p class="agent-trace-line">输入：{{ trace.toolInput }}</p>
+              <p class="agent-trace-line">输出：{{ trace.toolOutputSummary }}</p>
+            </li>
+          </ol>
         </el-card>
 
         <el-card v-if="answerText" shadow="never" class="follow-up-panel">

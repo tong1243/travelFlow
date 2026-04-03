@@ -9,6 +9,8 @@ public interface KnowledgeChunkRepository extends JpaRepository<KnowledgeChunk, 
 
     List<KnowledgeChunk> findByDocumentIdOrderByChunkIndexAsc(Long documentId);
 
+    List<KnowledgeChunk> findByDocumentIdIn(List<Long> documentIds);
+
     List<KnowledgeChunk> findByPointIdIn(List<String> pointIds);
 
     long countByDocumentId(Long documentId);

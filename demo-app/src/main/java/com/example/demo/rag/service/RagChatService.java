@@ -7,47 +7,38 @@ import com.example.demo.rag.dto.ChatRequest;
 import com.example.demo.rag.dto.ChatResponse;
 import com.example.demo.rag.dto.RagReferenceItem;
 import com.example.demo.rag.entity.ConversationSession;
-import com.example.demo.rag.model.VectorSearchHit;
+import com.example.demo.rag.langchain.RagLangChainComposer;
+import com.example.demo.rag.model.HybridSearchHit;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class RagChatService {
 
-    private static final String RAG_SYSTEM_PROMPT = """
-            You are an AI travel assistant.
-            - Give practical and safe travel guidance.
-            - Prefer information from provided knowledge context.
-            - If context is insufficient, explicitly say what is uncertain.
-            - Keep answer structured with clear actionable suggestions.
-            """;
-
     private final ConversationService conversationService;
-    private final EmbeddingService embeddingService;
-    private final QdrantVectorStoreClient vectorStoreClient;
+    private final HybridRetrievalService hybridRetrievalService;
     private final KnowledgeBaseService knowledgeBaseService;
     private final BailianClient bailianClient;
     private final BailianProperties bailianProperties;
     private final RagPipelineProperties ragPipelineProperties;
+    private final RagLangChainComposer ragLangChainComposer;
 
     public RagChatService(ConversationService conversationService,
-                          EmbeddingService embeddingService,
-                          QdrantVectorStoreClient vectorStoreClient,
+                          HybridRetrievalService hybridRetrievalService,
                           KnowledgeBaseService knowledgeBaseService,
                           BailianClient bailianClient,
                           BailianProperties bailianProperties,
-                          RagPipelineProperties ragPipelineProperties) {
+                          RagPipelineProperties ragPipelineProperties,
+                          RagLangChainComposer ragLangChainComposer) {
         this.conversationService = conversationService;
-        this.embeddingService = embeddingService;
-        this.vectorStoreClient = vectorStoreClient;
+        this.hybridRetrievalService = hybridRetrievalService;
         this.knowledgeBaseService = knowledgeBaseService;
         this.bailianClient = bailianClient;
         this.bailianProperties = bailianProperties;
         this.ragPipelineProperties = ragPipelineProperties;
+        this.ragLangChainComposer = ragLangChainComposer;
     }
 
     public ChatResponse chat(Long userId, ChatRequest request) {
@@ -57,36 +48,21 @@ public class RagChatService {
         int topK = request.topK() == null || request.topK() <= 0
                 ? ragPipelineProperties.getTopK()
                 : request.topK();
-        List<Double> queryVector = embeddingService.vectorize(request.question());
-        List<VectorSearchHit> hits = vectorStoreClient.search(queryVector, topK);
-        List<RagReferenceItem> references = knowledgeBaseService.toReferenceItems(hits);
+        List<HybridSearchHit> hits = hybridRetrievalService.retrieve(
+                request.question(),
+                topK,
+                request.sourceType(),
+                request.sourceRefContains()
+        );
+        List<RagReferenceItem> references = knowledgeBaseService.toHybridReferenceItems(hits);
 
         List<ConversationService.ContextMessage> history = conversationService.getRecentContextMessages(session.getId(), 12);
-        List<Map<String, String>> messages = buildModelMessages(history, references);
+        String ragContext = buildRagContext(references);
+        List<Map<String, String>> messages = ragLangChainComposer.composeMessages(history, references, ragContext);
         String answer = bailianClient.chatWithMessages(bailianProperties.getDefaultModel(), messages);
 
         conversationService.appendMessage(session.getId(), "assistant", answer);
         return new ChatResponse(session.getId(), answer, bailianProperties.getDefaultModel(), references);
-    }
-
-    private List<Map<String, String>> buildModelMessages(List<ConversationService.ContextMessage> history,
-                                                         List<RagReferenceItem> references) {
-        List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(message("system", RAG_SYSTEM_PROMPT));
-
-        String ragContext = buildRagContext(references);
-        if (!ragContext.isBlank()) {
-            messages.add(message("system", "Knowledge context:\n" + ragContext));
-        }
-
-        for (ConversationService.ContextMessage historyItem : history) {
-            if ("assistant".equalsIgnoreCase(historyItem.role())) {
-                messages.add(message("assistant", historyItem.content()));
-            } else {
-                messages.add(message("user", historyItem.content()));
-            }
-        }
-        return messages;
     }
 
     private String buildRagContext(List<RagReferenceItem> references) {
@@ -98,10 +74,21 @@ public class RagChatService {
         int index = 1;
         for (RagReferenceItem item : references) {
             String line = """
-                    [%d] %s (score=%.4f)
+                    [%d] %s | sourceType=%s | sourceRef=%s
+                    score=%.4f, vector=%.4f, lexical=%.4f, rerank=%.4f
                     %s
                     
-                    """.formatted(index++, item.documentTitle(), item.score(), item.snippet());
+                    """.formatted(
+                    index++,
+                    item.documentTitle(),
+                    fallback(item.sourceType(), "N/A"),
+                    fallback(item.sourceRef(), "N/A"),
+                    item.score(),
+                    item.vectorScore(),
+                    item.lexicalScore(),
+                    item.rerankScore(),
+                    item.snippet()
+            );
             if (builder.length() + line.length() > maxChars) {
                 break;
             }
@@ -110,10 +97,7 @@ public class RagChatService {
         return builder.toString().trim();
     }
 
-    private Map<String, String> message(String role, String content) {
-        Map<String, String> item = new LinkedHashMap<>();
-        item.put("role", role);
-        item.put("content", content);
-        return item;
+    private String fallback(String text, String defaultValue) {
+        return text == null || text.isBlank() ? defaultValue : text;
     }
 }

@@ -6,6 +6,7 @@ import com.example.demo.rag.dto.KnowledgeUpsertRequest;
 import com.example.demo.rag.dto.RagReferenceItem;
 import com.example.demo.rag.entity.KnowledgeChunk;
 import com.example.demo.rag.entity.KnowledgeDocument;
+import com.example.demo.rag.model.HybridSearchHit;
 import com.example.demo.rag.model.VectorSearchHit;
 import com.example.demo.rag.repo.KnowledgeChunkRepository;
 import com.example.demo.rag.repo.KnowledgeDocumentRepository;
@@ -109,12 +110,42 @@ public class KnowledgeBaseService {
             }
             KnowledgeDocument document = docsById.get(chunk.getDocumentId());
             String title = document == null ? "Unknown Document" : document.getTitle();
+            String sourceType = document == null ? null : document.getSourceType();
+            String sourceRef = document == null ? null : document.getSourceRef();
+            double vectorScore = scoreByPointId.getOrDefault(pointId, 0.0);
             result.add(new RagReferenceItem(
                     chunk.getId(),
                     chunk.getDocumentId(),
                     title,
-                    scoreByPointId.getOrDefault(pointId, 0.0),
+                    sourceType,
+                    sourceRef,
+                    vectorScore,
+                    0.0,
+                    0.0,
+                    vectorScore,
                     shortSnippet(chunk.getContent())
+            ));
+        }
+        return result;
+    }
+
+    public List<RagReferenceItem> toHybridReferenceItems(List<HybridSearchHit> hits) {
+        if (hits == null || hits.isEmpty()) {
+            return List.of();
+        }
+        List<RagReferenceItem> result = new ArrayList<>(hits.size());
+        for (HybridSearchHit hit : hits) {
+            result.add(new RagReferenceItem(
+                    hit.chunkId(),
+                    hit.documentId(),
+                    hit.documentTitle(),
+                    hit.sourceType(),
+                    hit.sourceRef(),
+                    hit.vectorScore(),
+                    hit.lexicalScore(),
+                    hit.rerankScore(),
+                    hit.score(),
+                    hit.snippet()
             ));
         }
         return result;

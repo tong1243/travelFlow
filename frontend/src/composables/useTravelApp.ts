@@ -105,9 +105,40 @@ export type TripRecord = {
   updatedAt: string
 }
 
+export type RagReference = {
+  chunkId: number
+  documentId: number
+  documentTitle: string
+  sourceType: string | null
+  sourceRef: string | null
+  vectorScore: number
+  lexicalScore: number
+  rerankScore: number
+  score: number
+  snippet: string
+}
+
+export type AgentToolTrace = {
+  step: number
+  toolName: string
+  toolInput: string
+  toolOutputSummary: string
+}
+
 type SystemStatus = {
   apiKeyConfigured: boolean
   defaultModel: string
+}
+
+type RagChatResponse = {
+  sessionId: string
+  answer: string
+  model: string
+  references: RagReference[]
+}
+
+type AgentChatResponse = RagChatResponse & {
+  traces: AgentToolTrace[]
 }
 
 type PortalHomeResponse = {
@@ -152,6 +183,15 @@ type StreamOptions = {
   saveTargetTripId?: number | null
 }
 
+type RagRequestOptions = {
+  useAgent: boolean
+  question?: string
+  append?: boolean
+  prefix?: string
+  tripTitle?: string
+  saveTargetTripId?: number | null
+}
+
 const TOKEN_KEY = 'travelflow_token'
 const REQUEST_TIMEOUT_MS = 120000
 
@@ -181,6 +221,13 @@ const endDate = ref(getDateOffset(17))
 const budget = ref('1000-3000 元/人')
 const companionType = ref('朋友')
 const travelStyle = ref('轻松')
+const useAgentMode = ref(false)
+const ragSourceType = ref('')
+const ragSourceRefContains = ref('')
+const ragReferences = ref<RagReference[]>([])
+const agentToolTraces = ref<AgentToolTrace[]>([])
+const ragSessionId = ref<string | null>(null)
+const lastAssistantMode = ref<'legacy' | 'rag' | 'agent'>('legacy')
 
 const toastText = ref('')
 const toastType = ref<'info' | 'ok' | 'error'>('info')
@@ -473,6 +520,8 @@ async function restoreTrip(tripId: number) {
     budget.value = target.budget
     companionType.value = target.companionType
     travelStyle.value = target.travelStyle
+    clearRagArtifacts(true)
+    lastAssistantMode.value = 'legacy'
     clearPendingPlan()
     clearAssistantError()
     return true
@@ -572,6 +621,137 @@ function localizeKnownErrorMessage(message: string): string {
   }
 
   return message
+}
+
+function clearRagArtifacts(clearSession = false) {
+  ragReferences.value = []
+  agentToolTraces.value = []
+  if (clearSession) {
+    ragSessionId.value = null
+  }
+}
+
+function buildRagQuestion(questionOverride?: string) {
+  const overridden = questionOverride?.trim()
+  if (overridden) return overridden
+
+  const destination = searchKeyword.value.trim()
+  if (!destination) return ''
+
+  return [
+    `目的地或需求：${destination}`,
+    `出发地：${departureCity.value.trim() || '上海'}`,
+    `出行日期：${startDate.value} 到 ${endDate.value}`,
+    `出行人数：${Math.max(1, Number(travelers.value || 1))}`,
+    `预算：${budget.value.trim() || '1000-3000 元/人'}`,
+    `同行类型：${companionType.value.trim() || '朋友'}`,
+    `旅行风格：${travelStyle.value.trim() || '轻松'}`,
+    '请输出可执行的 Markdown 行程方案，包含每日安排、预算拆分、交通建议和风险提示。',
+  ].join('\n')
+}
+
+async function requestRagAssistant(options: RagRequestOptions): Promise<boolean> {
+  if (isLoading.value) {
+    showToast('正在生成内容，请稍候', 'info')
+    return false
+  }
+  if (!requireLoginForAssistant()) return false
+
+  const append = options.append ?? false
+  const useAgent = options.useAgent
+  const question = buildRagQuestion(options.question)
+  if (!question) {
+    errorMessage.value = '请输入目的地或问题。'
+    return false
+  }
+
+  isLoading.value = true
+  errorMessage.value = ''
+  if (!append) {
+    answerText.value = ''
+    clearRagArtifacts(true)
+    lastAssistantMode.value = 'legacy'
+  } else if (options.prefix) {
+    answerText.value += options.prefix
+  }
+
+  const controller = new AbortController()
+  activeAbortController.value = controller
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const saveTargetTripId = options.saveTargetTripId !== undefined ? options.saveTargetTripId : activeTripId.value
+  const endpoint = useAgent ? '/api/v1/chat/agent/ask' : '/api/v1/chat/ask'
+
+  try {
+    const sourceType = ragSourceType.value.trim()
+    const sourceRefContains = ragSourceRefContains.value.trim()
+    const payload = {
+      sessionId: ragSessionId.value,
+      question,
+      topK: 5,
+      sourceType: sourceType || null,
+      sourceRefContains: sourceRefContains || null,
+      includeTrace: useAgent ? true : undefined,
+    }
+
+    const response = useAgent
+      ? await apiFetch<AgentChatResponse>(
+          endpoint,
+          {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          },
+          true,
+        )
+      : await apiFetch<RagChatResponse>(
+          endpoint,
+          {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          },
+          true,
+        )
+
+    const answer = response.answer?.trim() || ''
+    if (!answer) {
+      throw new Error('模型未返回内容，请稍后再试。')
+    }
+
+    answerText.value += answer
+    ragSessionId.value = response.sessionId || ragSessionId.value
+    ragReferences.value = response.references ?? []
+    agentToolTraces.value = useAgent ? (response as AgentChatResponse).traces ?? [] : []
+    lastAssistantMode.value = useAgent ? 'agent' : 'rag'
+
+    const currentActiveTripBeforeSave = activeTripId.value
+    const saved = await saveCurrentTrip(options.tripTitle, true, saveTargetTripId)
+    if (saveTargetTripId !== null && currentActiveTripBeforeSave !== saveTargetTripId && currentActiveTripBeforeSave !== null) {
+      activeTripId.value = currentActiveTripBeforeSave
+    }
+    if (!saved) {
+      showToast('方案已生成，但自动保存失败，请稍后手动保存。', 'error')
+    }
+    showToast(useAgent ? '已生成 Agent 方案' : '已生成 RAG 方案', 'ok')
+    return true
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      errorMessage.value = '生成已停止。'
+      showToast('已停止生成', 'info')
+      return false
+    }
+    if (error instanceof Error) {
+      errorMessage.value = localizeKnownErrorMessage(error.message)
+    } else {
+      errorMessage.value = '请求失败，请稍后重试。'
+    }
+    showToast('生成失败，请查看提示', 'error')
+    return false
+  } finally {
+    window.clearTimeout(timeout)
+    activeAbortController.value = null
+    isLoading.value = false
+  }
 }
 
 async function streamAssistant(
@@ -874,10 +1054,8 @@ async function handleViewAllGuides() {
 }
 
 async function generateKeywordPlanNow() {
-  if (!requireLoginForAssistant()) return false
   clearAssistantError()
-  const destination = searchKeyword.value.trim()
-  if (!destination) {
+  if (!searchKeyword.value.trim()) {
     errorMessage.value = '请输入目的地或需求关键词。'
     return false
   }
@@ -895,21 +1073,11 @@ async function generateKeywordPlanNow() {
     return false
   }
 
-  const payload = {
-    destination,
-    startDate: startDate.value,
-    endDate: endDate.value,
-    travelers: travelers.value,
-    departureCity: departureCity.value,
-    budget: budget.value,
-    interests: `${companionType.value},${travelStyle.value}`,
-    travelStyle: travelStyle.value,
-    notes:
-      '请用 Markdown 输出并包含：1) 目的地建议理由 2) 按天路线摘要 3) 预算拆分（按人均预算，并补充总预算估算）4) 节奏建议与避坑提示。',
-  }
-  return streamAssistant('/api/travel/plan/stream', payload, '已生成旅行建议', {
-    withAuth: true,
-    tripTitle: `${destination} · 旅行方案`,
+  const destination = searchKeyword.value.trim()
+  clearRagArtifacts(true)
+  return requestRagAssistant({
+    useAgent: useAgentMode.value,
+    tripTitle: `${destination} · ${useAgentMode.value ? 'Agent' : 'RAG'} 旅行方案`,
     saveTargetTripId: null,
   })
 }
@@ -984,6 +1152,16 @@ async function submitFollowUp() {
   }
 
   followUpQuestion.value = ''
+  if ((lastAssistantMode.value === 'rag' || lastAssistantMode.value === 'agent') && ragSessionId.value) {
+    await requestRagAssistant({
+      useAgent: lastAssistantMode.value === 'agent',
+      question,
+      append: true,
+      prefix: `\n\n---\n\n### 追问：${question}\n\n`,
+    })
+    return
+  }
+
   await streamAssistant(
     '/api/travel/follow-up/stream',
     {
@@ -1073,6 +1251,8 @@ function logout() {
   adminEnterpriseCards.value = []
   tripHistory.value = []
   activeTripId.value = null
+  clearRagArtifacts(true)
+  lastAssistantMode.value = 'legacy'
   showToast('已退出登录', 'info')
 }
 
@@ -1238,6 +1418,11 @@ export function useTravelApp() {
     budget,
     companionType,
     travelStyle,
+    useAgentMode,
+    ragSourceType,
+    ragSourceRefContains,
+    ragReferences,
+    agentToolTraces,
     toastText,
     toastType,
     showToast,

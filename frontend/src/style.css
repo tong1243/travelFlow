@@ -711,6 +711,40 @@ button {
   color: var(--primary-deep);
 }
 
+.rag-reference-list,
+.agent-trace-list {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.rag-reference-item,
+.agent-trace-list li {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  list-style: none;
+}
+
+.rag-reference-title,
+.agent-trace-title {
+  margin: 0;
+  font-size: 13px;
+  color: var(--primary-deep);
+  font-weight: 600;
+}
+
+.rag-reference-meta,
+.agent-trace-line,
+.rag-reference-snippet {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
 .category-nav {
   margin-top: 18px;
   display: flex;

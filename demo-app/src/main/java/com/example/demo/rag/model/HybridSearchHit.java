@@ -1,15 +1,15 @@
-package com.example.demo.rag.dto;
+package com.example.demo.rag.model;
 
-public record RagReferenceItem(
+public record HybridSearchHit(
         Long chunkId,
         Long documentId,
         String documentTitle,
         String sourceType,
         String sourceRef,
+        String snippet,
         double vectorScore,
         double lexicalScore,
         double rerankScore,
-        double score,
-        String snippet
+        double score
 ) {
 }
