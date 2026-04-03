@@ -1,0 +1,20 @@
+2026-04-02T10:00:06.990006Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+2026-04-02T10:00:07.637326Z 0 [System] [MY-010116] [Server] C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe (mysqld 8.4.8) starting as process 42808
+2026-04-02T10:00:07.682670Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-04-02T10:00:07.683511Z 1 [ERROR] [MY-012271] [InnoDB] The innodb_system data file 'ibdata1' must be writable
+2026-04-02T10:00:07.684117Z 1 [ERROR] [MY-012278] [InnoDB] The innodb_system data file 'ibdata1' must be writable
+2026-04-02T10:00:07.684945Z 1 [ERROR] [MY-010334] [Server] Failed to initialize DD Storage Engine
+2026-04-02T10:00:07.685892Z 0 [ERROR] [MY-010020] [Server] Data Dictionary initialization failed.
+2026-04-02T10:00:07.686446Z 0 [ERROR] [MY-010119] [Server] Aborting
+2026-04-02T10:00:07.688941Z 0 [System] [MY-010910] [Server] C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe: Shutdown complete (mysqld 8.4.8)  MySQL Community Server - GPL.
+2026-04-02T10:00:07.689343Z 0 [System] [MY-015016] [Server] MySQL Server - end.
+2026-04-02T10:01:41.567340Z 0 [System] [MY-015015] [Server] MySQL Server - start.
+2026-04-02T10:01:41.660287Z 0 [System] [MY-010116] [Server] C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe (mysqld 8.4.8) starting as process 51060
+2026-04-02T10:01:41.686100Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-04-02T10:01:43.972358Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-04-02T10:01:45.134461Z 0 [System] [MY-010229] [Server] Starting XA crash recovery...
+2026-04-02T10:01:45.139886Z 0 [System] [MY-010232] [Server] XA crash recovery finished.
+2026-04-02T10:01:45.430173Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2026-04-02T10:01:45.430401Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2026-04-02T10:01:45.492102Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060
+2026-04-02T10:01:45.492196Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe: ready for connections. Version: '8.4.8'  socket: ''  port: 3306  MySQL Community Server - GPL.

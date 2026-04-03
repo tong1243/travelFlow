@@ -1,0 +1,20 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Travel Assistant Backend" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="demo-app" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.example.demo.DemoApplication" />
+    <envs>
+      <env name="SPRING_DATASOURCE_URL" value="jdbc:mysql://127.0.0.1:3306/travel_ai?useSSL=false&amp;serverTimezone=UTC&amp;characterEncoding=UTF-8&amp;createDatabaseIfNotExist=true&amp;allowPublicKeyRetrieval=true" />
+      <env name="SPRING_DATASOURCE_USERNAME" value="root" />
+      <env name="SPRING_DATASOURCE_PASSWORD" value="root" />
+      <env name="REDIS_HOST" value="127.0.0.1" />
+      <env name="REDIS_PORT" value="6379" />
+      <env name="QDRANT_URL" value="http://127.0.0.1:6333" />
+      <env name="QDRANT_COLLECTION" value="travel_knowledge" />
+      <env name="QDRANT_VECTOR_DIMENSION" value="1024" />
+      <env name="APP_JWT_SECRET" value="travel-ai-jwt-secret-2026-very-strong-key" />
+    </envs>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
