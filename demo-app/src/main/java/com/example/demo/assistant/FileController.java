@@ -19,6 +19,7 @@ public class FileController {
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Deprecated(since = "2026-04", forRemoval = false)
     public FileUploadResult upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "purpose", required = false) String purpose

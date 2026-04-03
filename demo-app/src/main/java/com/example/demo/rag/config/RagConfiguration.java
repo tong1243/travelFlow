@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties({
         BailianProperties.class,
         AppSecurityProperties.class,
+        ApiAuditProperties.class,
         RateLimitProperties.class,
         VectorDbProperties.class,
         RagPipelineProperties.class

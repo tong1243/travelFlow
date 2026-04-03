@@ -52,6 +52,21 @@ app:
     jwt-expire-seconds: ${APP_JWT_EXPIRE_SECONDS:86400}
   rate-limit:
     per-minute: ${APP_RATE_LIMIT_PER_MINUTE:120}
+  api-audit:
+    enabled: ${APP_API_AUDIT_ENABLED:true}
+    include-all-api: ${APP_API_AUDIT_INCLUDE_ALL:true}
+    candidate-prefixes:
+      - /api/files/upload
+      - /api/portal/categories
+      - /api/portal/spot-plan
+      - /api/travel/plan
+      - /api/travel/budget
+      - /api/travel/plan/files
+      - /api/travel/file-qa
+      - /api/v1/chat
+      - /api/v1/knowledge
+      - /api/v1/vector
+      - /api/v1/users
   vector-db:
     url: ${QDRANT_URL:http://localhost:6333}
     api-key: ${QDRANT_API_KEY:}

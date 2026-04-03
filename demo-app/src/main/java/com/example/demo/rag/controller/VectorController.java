@@ -16,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/vector")
+@Deprecated(since = "2026-04", forRemoval = false)
 public class VectorController {
 
     private final VectorService vectorService;

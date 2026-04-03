@@ -25,12 +25,14 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public UserProfileResponse me(@AuthenticationPrincipal AuthenticatedUser user) {
         return authService.me(user.getId());
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public List<UserProfileResponse> listUsers() {
         return userManagementService.listUsers();
     }

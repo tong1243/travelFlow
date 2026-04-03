@@ -31,17 +31,20 @@ public class ChatController {
     }
 
     @PostMapping("/ask")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public ChatResponse ask(@AuthenticationPrincipal AuthenticatedUser user,
                             @Valid @RequestBody ChatRequest request) {
         return ragChatService.chat(user.getId(), request);
     }
 
     @GetMapping("/sessions")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public List<ConversationSummaryResponse> sessions(@AuthenticationPrincipal AuthenticatedUser user) {
         return conversationService.listSessions(user.getId());
     }
 
     @GetMapping("/sessions/{sessionId}/messages")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public List<ConversationMessageResponse> sessionMessages(@AuthenticationPrincipal AuthenticatedUser user,
                                                              @PathVariable("sessionId") String sessionId) {
         return conversationService.listSessionHistory(user.getId(), sessionId);

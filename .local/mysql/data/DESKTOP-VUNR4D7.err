@@ -18,3 +18,9 @@
 2026-04-02T10:01:45.430401Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
 2026-04-02T10:01:45.492102Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060
 2026-04-02T10:01:45.492196Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe: ready for connections. Version: '8.4.8'  socket: ''  port: 3306  MySQL Community Server - GPL.
+2026-04-02T22:18:15.024783Z 407 [ERROR] [MY-013935] [Server] IO-layer timeout before wait_timeout was reached.
+2026-04-02T22:18:15.919380Z 408 [ERROR] [MY-013935] [Server] IO-layer timeout before wait_timeout was reached.
+2026-04-02T22:18:17.745242Z 410 [ERROR] [MY-013935] [Server] IO-layer timeout before wait_timeout was reached.
+2026-04-02T22:18:18.569319Z 409 [ERROR] [MY-013935] [Server] IO-layer timeout before wait_timeout was reached.
+2026-04-02T22:18:19.113543Z 404 [ERROR] [MY-013935] [Server] IO-layer timeout before wait_timeout was reached.
+2026-04-02T22:18:19.828016Z 411 [ERROR] [MY-013935] [Server] IO-layer timeout before wait_timeout was reached.

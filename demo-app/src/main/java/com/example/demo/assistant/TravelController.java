@@ -27,6 +27,7 @@ public class TravelController {
     }
 
     @PostMapping("/plan")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public AssistantResult generatePlan(@Valid @RequestBody TravelPlanRequest request) {
         return travelAssistantService.generateTravelPlan(request);
     }
@@ -64,16 +65,19 @@ public class TravelController {
     }
 
     @PostMapping("/budget")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public AssistantResult estimateBudget(@Valid @RequestBody TravelBudgetRequest request) {
         return travelAssistantService.estimateBudget(request);
     }
 
     @PostMapping("/plan/files")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public AssistantResult planByFiles(@Valid @RequestBody TravelPlanByFilesRequest request) {
         return travelAssistantService.planByFiles(request);
     }
 
     @PostMapping("/file-qa")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public AssistantResult fileQa(@Valid @RequestBody TravelFileQaRequest request) {
         return travelAssistantService.askByFile(request.fileId(), request.question());
     }

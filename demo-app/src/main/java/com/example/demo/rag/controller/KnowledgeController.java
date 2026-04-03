@@ -33,12 +33,14 @@ public class KnowledgeController {
     }
 
     @PostMapping("/documents")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public KnowledgeDocumentResponse create(@AuthenticationPrincipal AuthenticatedUser user,
                                             @Valid @RequestBody KnowledgeUpsertRequest request) {
         return knowledgeBaseService.createDocument(request, user.getId());
     }
 
     @PutMapping("/documents/{documentId}")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public KnowledgeDocumentResponse update(@AuthenticationPrincipal AuthenticatedUser user,
                                             @PathVariable("documentId") Long documentId,
                                             @Valid @RequestBody KnowledgeUpsertRequest request) {
@@ -46,6 +48,7 @@ public class KnowledgeController {
     }
 
     @PostMapping(value = "/documents/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Deprecated(since = "2026-04", forRemoval = false)
     public KnowledgeDocumentResponse upload(@AuthenticationPrincipal AuthenticatedUser user,
                                             @RequestPart("file") MultipartFile file,
                                             @RequestParam(value = "title", required = false) String title,
@@ -56,11 +59,13 @@ public class KnowledgeController {
     }
 
     @GetMapping("/documents")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public List<KnowledgeDocumentResponse> list() {
         return knowledgeBaseService.listDocuments();
     }
 
     @DeleteMapping("/documents/{documentId}")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public void delete(@PathVariable("documentId") Long documentId) {
         knowledgeBaseService.deleteDocument(documentId);
     }

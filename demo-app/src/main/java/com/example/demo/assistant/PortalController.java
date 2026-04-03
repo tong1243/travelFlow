@@ -42,6 +42,7 @@ public class PortalController {
     }
 
     @GetMapping("/categories")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public List<String> categories() {
         return portalContentService.categories();
     }
@@ -62,6 +63,7 @@ public class PortalController {
     }
 
     @PostMapping("/spot-plan")
+    @Deprecated(since = "2026-04", forRemoval = false)
     public AssistantResult spotPlan(@Valid @RequestBody PortalSpotPlanRequest request) {
         return travelAssistantService.generateSpotPlan(request);
     }
