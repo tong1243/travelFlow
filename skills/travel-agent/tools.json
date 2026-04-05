@@ -1,0 +1,404 @@
+﻿[
+    {
+        "description":  "根据城市关键词标签价格范围搜索景点",
+        "name":  "search_attractions",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "keyword":  {
+                                                              "type":  "string",
+                                                              "description":  "检索关键词"
+                                                          },
+                                              "min_price":  {
+                                                                "type":  "number",
+                                                                "minimum":  0
+                                                            },
+                                              "tags":  {
+                                                           "description":  "人群或主题标签",
+                                                           "items":  {
+                                                                         "type":  "string",
+                                                                         "enum":  [
+                                                                                      "亲子",
+                                                                                      "情侣",
+                                                                                      "老人",
+                                                                                      "徒步",
+                                                                                      "海边",
+                                                                                      "小众"
+                                                                                  ]
+                                                                     },
+                                                           "type":  "array"
+                                                       },
+                                              "max_price":  {
+                                                                "type":  "number",
+                                                                "minimum":  0
+                                                            },
+                                              "city":  {
+                                                           "type":  "string",
+                                                           "description":  "目标城市"
+                                                       }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "city"
+                                        ]
+                       }
+    },
+    {
+        "description":  "根据城市位置星级价格范围筛选酒店",
+        "name":  "search_hotels",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "price_min":  {
+                                                                "type":  "number",
+                                                                "minimum":  0
+                                                            },
+                                              "price_max":  {
+                                                                "type":  "number",
+                                                                "minimum":  0
+                                                            },
+                                              "star":  {
+                                                           "maximum":  5,
+                                                           "type":  "integer",
+                                                           "minimum":  1
+                                                       },
+                                              "location":  {
+                                                               "type":  "string",
+                                                               "description":  "商圈或景点附近"
+                                                           },
+                                              "city":  {
+                                                           "type":  "string"
+                                                       }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "city"
+                                        ]
+                       }
+    },
+    {
+        "description":  "查询机票时间价格并支持排序",
+        "name":  "search_flights",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "dep_city":  {
+                                                               "type":  "string"
+                                                           },
+                                              "dep_date":  {
+                                                               "type":  "string",
+                                                               "description":  "YYYY-MM-DD"
+                                                           },
+                                              "sort":  {
+                                                           "type":  "string",
+                                                           "enum":  [
+                                                                        "价格",
+                                                                        "时间"
+                                                                    ]
+                                                       },
+                                              "arr_city":  {
+                                                               "type":  "string"
+                                                           }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "dep_city",
+                                            "arr_city",
+                                            "dep_date"
+                                        ]
+                       }
+    },
+    {
+        "description":  "查询高铁火车班次时间价格",
+        "name":  "search_trains",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "dep_city":  {
+                                                               "type":  "string"
+                                                           },
+                                              "dep_date":  {
+                                                               "type":  "string",
+                                                               "description":  "YYYY-MM-DD"
+                                                           },
+                                              "arr_city":  {
+                                                               "type":  "string"
+                                                           }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "dep_city",
+                                            "arr_city",
+                                            "dep_date"
+                                        ]
+                       }
+    },
+    {
+        "description":  "根据城市天数人群节奏预算生成逐日行程",
+        "name":  "generate_itinerary",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "budget":  {
+                                                             "type":  "number",
+                                                             "minimum":  0
+                                                         },
+                                              "days":  {
+                                                           "maximum":  30,
+                                                           "type":  "integer",
+                                                           "minimum":  1
+                                                       },
+                                              "pace":  {
+                                                           "type":  "string",
+                                                           "enum":  [
+                                                                        "宽松",
+                                                                        "紧凑"
+                                                                    ]
+                                                       },
+                                              "people_type":  {
+                                                                  "type":  "string",
+                                                                  "enum":  [
+                                                                               "成人",
+                                                                               "老人",
+                                                                               "亲子"
+                                                                           ]
+                                                              },
+                                              "city":  {
+                                                           "type":  "string"
+                                                       }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "city",
+                                            "days"
+                                        ]
+                       }
+    },
+    {
+        "description":  "获取城市攻略注意事项必玩必吃",
+        "name":  "get_travel_guide",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "city":  {
+                                                           "type":  "string"
+                                                       }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "city"
+                                        ]
+                       }
+    },
+    {
+        "description":  "推荐当地美食和餐厅",
+        "name":  "get_local_food",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "taste":  {
+                                                            "type":  "string",
+                                                            "enum":  [
+                                                                         "辣",
+                                                                         "清淡",
+                                                                         "不限"
+                                                                     ]
+                                                        },
+                                              "budget":  {
+                                                             "type":  "number",
+                                                             "minimum":  0
+                                                         },
+                                              "city":  {
+                                                           "type":  "string"
+                                                       }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "city"
+                                        ]
+                       }
+    },
+    {
+        "description":  "获取目的地天气用于出行提醒",
+        "name":  "get_weather",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "city":  {
+                                                           "type":  "string"
+                                                       },
+                                              "date":  {
+                                                           "type":  "string",
+                                                           "description":  "YYYY-MM-DD"
+                                                       }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "city",
+                                            "date"
+                                        ]
+                       }
+    },
+    {
+        "description":  "根据行程信息估算总预算",
+        "name":  "calculate_budget",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "days":  {
+                                                           "maximum":  30,
+                                                           "type":  "integer",
+                                                           "minimum":  1
+                                                       },
+                                              "hotel_level":  {
+                                                                  "type":  "string",
+                                                                  "enum":  [
+                                                                               "经济",
+                                                                               "舒适",
+                                                                               "高端"
+                                                                           ]
+                                                              },
+                                              "people":  {
+                                                             "maximum":  20,
+                                                             "type":  "integer",
+                                                             "minimum":  1
+                                                         },
+                                              "city":  {
+                                                           "type":  "string"
+                                                       }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "city",
+                                            "days",
+                                            "people"
+                                        ]
+                       }
+    },
+    {
+        "description":  "对比多个目的地适合度花费季节",
+        "name":  "compare_destinations",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "time":  {
+                                                           "type":  "string",
+                                                           "description":  "出行时间窗口"
+                                                       },
+                                              "dest_list":  {
+                                                                "minItems":  2,
+                                                                "items":  {
+                                                                              "type":  "string"
+                                                                          },
+                                                                "type":  "array",
+                                                                "maxItems":  10
+                                                            },
+                                              "theme":  {
+                                                            "type":  "string",
+                                                            "description":  "主题偏好"
+                                                        }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "dest_list"
+                                        ]
+                       }
+    },
+    {
+        "description":  "查询签证要求材料办理难度",
+        "name":  "query_visa_info",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "country":  {
+                                                              "type":  "string"
+                                                          }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "country"
+                                        ]
+                       }
+    },
+    {
+        "description":  "提供出行清单避坑建议安全提醒",
+        "name":  "travel_tips",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "city":  {
+                                                           "type":  "string"
+                                                       },
+                                              "scene":  {
+                                                            "type":  "string",
+                                                            "description":  "场景类型"
+                                                        }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "city"
+                                        ]
+                       }
+    },
+    {
+        "description":  "向量知识库语义检索",
+        "name":  "semantic_search_kb",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "user_query":  {
+                                                                 "type":  "string"
+                                                             },
+                                              "top_k":  {
+                                                            "default":  5,
+                                                            "maximum":  20,
+                                                            "type":  "integer",
+                                                            "minimum":  1
+                                                        }
+                                          },
+                           "type":  "object",
+                           "required":  [
+                                            "user_query"
+                                        ]
+                       }
+    },
+    {
+        "description":  "读取历史对话和用户偏好",
+        "name":  "chat_memory",
+        "type":  "function",
+        "parameters":  {
+                           "additionalProperties":  false,
+                           "properties":  {
+                                              "scope":  {
+                                                            "enum":  [
+                                                                         "最近",
+                                                                         "长期",
+                                                                         "全部"
+                                                                     ],
+                                                            "default":  "最近",
+                                                            "type":  "string"
+                                                        },
+                                              "user_id":  {
+                                                              "type":  "string"
+                                                          },
+                                              "session_id":  {
+                                                                 "type":  "string"
+                                                             }
+                                          },
+                           "type":  "object"
+                       }
+    }
+]

@@ -662,6 +662,7 @@ async function requestRagAssistant(options: RagRequestOptions): Promise<boolean>
   const question = buildRagQuestion(options.question)
   if (!question) {
     errorMessage.value = '请输入目的地或问题。'
+    showToast('请输入目的地或问题。', 'info')
     return false
   }
 
@@ -1057,19 +1058,23 @@ async function generateKeywordPlanNow() {
   clearAssistantError()
   if (!searchKeyword.value.trim()) {
     errorMessage.value = '请输入目的地或需求关键词。'
+    showToast('请输入目的地或需求关键词。', 'info')
     return false
   }
   const today = new Date().toISOString().slice(0, 10)
   if (startDate.value > endDate.value) {
     errorMessage.value = '开始日期不能晚于结束日期。'
+    showToast('开始日期不能晚于结束日期。', 'info')
     return false
   }
   if (startDate.value < today) {
     errorMessage.value = '开始日期不能早于今天。'
+    showToast('开始日期不能早于今天。', 'info')
     return false
   }
   if (travelers.value < 1) {
     errorMessage.value = '出行人数不能少于 1 人。'
+    showToast('出行人数不能少于 1 人。', 'info')
     return false
   }
 
@@ -1117,9 +1122,20 @@ async function generateSpotPlanNow(spot: SpotCard) {
 
 async function confirmPendingPlan() {
   if (pendingPlan.value?.type === 'spot' && selectedSpot.value) {
+    if (!isLoggedIn.value) {
+      openAuth('login')
+      showToast('请先登录后再生成景点行程。', 'info')
+      return
+    }
     lastRetryIntent.value = { type: 'spot', spot: { ...selectedSpot.value } }
     const ok = await generateSpotPlanNow(selectedSpot.value)
     if (ok) clearPendingPlan()
+    return
+  }
+
+  if (!isLoggedIn.value) {
+    openAuth('login')
+    showToast('请先登录后再生成旅行方案。', 'info')
     return
   }
 

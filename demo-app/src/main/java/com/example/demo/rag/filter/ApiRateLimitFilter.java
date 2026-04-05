@@ -58,7 +58,7 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
             response.setStatus(429);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             Map<String, Object> body = new HashMap<>();
-            body.put("message", "Rate limit exceeded. Please retry later.");
+            body.put("message", "请求过于频繁，请稍后再试。");
             body.put("timestamp", Instant.now().toString());
             response.getWriter().write(objectMapper.writeValueAsString(body));
             return;

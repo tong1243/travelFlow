@@ -60,9 +60,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (JwtException | IllegalArgumentException ignored) {
-            // Invalid token: continue and let Spring Security return 401 on protected endpoints.
+            // 令牌无效时继续放行，由鉴权框架在受保护接口返回 401。
         } catch (RuntimeException ignored) {
-            // Invalid token: continue and let Spring Security return 401 on protected endpoints.
+            // 令牌无效时继续放行，由鉴权框架在受保护接口返回 401。
         }
         filterChain.doFilter(request, response);
     }

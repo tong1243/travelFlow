@@ -167,7 +167,7 @@ public class HybridRetrievalService {
                 scoreByPoint.merge(pointId, score, Math::max);
             }
         } catch (RagException ex) {
-            // Keep lexical retrieval available when the vector store is unavailable.
+            // 向量检索失败时保留词法检索能力，避免整条链路不可用。
             log.warn("Vector retrieval failed, fallback to lexical only: {}", ex.getMessage());
         }
         return scoreByPoint;
@@ -302,7 +302,7 @@ public class HybridRetrievalService {
                 continue;
             }
             if (isHanToken(token)) {
-                // Chinese continuous text is additionally split to bi-grams for better matching.
+                // 中文连续文本额外拆分为双字词，提高匹配效果。
                 terms.add(token);
                 terms.addAll(toHanBiGrams(token));
             } else if (token.length() >= 2) {

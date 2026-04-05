@@ -18,7 +18,7 @@ public class TravelAssistantService {
             你是一名资深旅行规划顾问，擅长行程设计、预算拆解、交通衔接和风险提示。
             回答要求：
             1) 信息真实可执行，避免空话。
-            2) 输出结构化，优先使用 Markdown 标题与列表。
+            2) 输出结构化，优先使用 Markdown 标题和列表。
             3) 优先考虑省时、省钱、少踩坑。
             4) 默认使用中文。
             """;
@@ -72,32 +72,32 @@ public class TravelAssistantService {
     public void streamTravelPlan(TravelPlanRequest request, Consumer<String> onDelta) {
         int travelers = request.travelers() == null || request.travelers() <= 0 ? 1 : request.travelers();
         String prompt = """
-                Please generate a practical travel plan in Chinese with Markdown format:
-                - Destination: %s
-                - Departure city: %s
-                - Date range: %s to %s
-                - Travelers: %d
-                - Budget: %s
-                - Interests: %s
-                - Travel style: %s
-                - Notes: %s
+                请用中文生成一份实用的 Markdown 旅行方案：
+                - 目的地：%s
+                - 出发地：%s
+                - 日期范围：%s 到 %s
+                - 出行人数：%d
+                - 预算：%s
+                - 兴趣偏好：%s
+                - 旅行风格：%s
+                - 备注：%s
 
-                Output requirements:
-                1) Overview and suitability
-                2) Day-by-day schedule (morning/afternoon/evening)
-                3) Transport recommendations
-                4) Budget breakdown
-                5) Anti-pitfall tips
+                输出要求：
+                1) 方案总览与适配人群
+                2) 逐日安排（上午/下午/晚上）
+                3) 交通衔接建议
+                4) 预算拆分
+                5) 避坑提醒
                 """.formatted(
                 request.destination(),
-                blankToDefault(request.departureCity(), "Shanghai"),
-                blankToDefault(request.startDate(), "TBD"),
-                blankToDefault(request.endDate(), "TBD"),
+                blankToDefault(request.departureCity(), "上海"),
+                blankToDefault(request.startDate(), "待定"),
+                blankToDefault(request.endDate(), "待定"),
                 travelers,
-                blankToDefault(request.budget(), "medium"),
-                blankToDefault(request.interests(), "sightseeing"),
-                blankToDefault(request.travelStyle(), "relaxed"),
-                blankToDefault(request.notes(), "none")
+                blankToDefault(request.budget(), "中等预算"),
+                blankToDefault(request.interests(), "观光"),
+                blankToDefault(request.travelStyle(), "轻松"),
+                blankToDefault(request.notes(), "无")
         );
         bailianClient.chatStream(properties.getDefaultModel(), TRAVEL_SYSTEM_PROMPT, prompt, onDelta);
     }
@@ -116,7 +116,7 @@ public class TravelAssistantService {
                 - 备注：%s
 
                 输出格式要求：
-                1) 基础版/舒适版预算对比（表格）
+                1) 基础版、舒适版预算对比（表格）
                 2) 费用拆分（机票、酒店、交通、餐饮、景点、保险）
                 3) 可节省成本的 10 条建议（按优先级）
                 4) 最终建议预算区间（最低可行 + 推荐）
@@ -146,8 +146,7 @@ public class TravelAssistantService {
 
         String prompt = """
                 请基于这些上传文件生成旅行计划。
-                文件可能包含：机酒预订单、攻略文档、签证材料、偏好说明。
-
+                文件可能包含：机酒订单、攻略文档、签证材料、偏好说明。
                 额外要求：%s
 
                 输出：
@@ -166,7 +165,6 @@ public class TravelAssistantService {
                 请基于上传文件回答问题，并标注依据。
                 如果文件没有直接证据，请明确说明“文件中未找到直接依据”。
                 输出控制在 400 字以内。
-
                 问题：%s
                 """.formatted(blankToDefault(question, "无"));
 
@@ -194,22 +192,22 @@ public class TravelAssistantService {
 
     public void streamFollowUp(TravelFollowUpRequest request, Consumer<String> onDelta) {
         String prompt = """
-                You are continuing a travel assistant conversation.
-                Previous answer:
+                你正在继续一段旅行规划对话。
+                上一轮回答如下：
                 ---
                 %s
                 ---
 
-                User follow-up question:
+                用户追问：
                 %s
 
-                Requirements:
-                1) Answer in Chinese with Markdown.
-                2) Keep context consistent with previous plan.
-                3) Be specific and executable.
-                4) If previous answer has issues, correct them explicitly.
+                回答要求：
+                1) 使用中文并保持 Markdown 结构；
+                2) 与上一轮方案保持上下文一致；
+                3) 内容具体、可执行；
+                4) 若上一轮存在问题，请明确纠正。
                 """.formatted(
-                blankToDefault(request.previousAnswer(), "N/A"),
+                blankToDefault(request.previousAnswer(), "无"),
                 blankToDefault(request.question(), "")
         );
         bailianClient.chatStream(properties.getDefaultModel(), TRAVEL_SYSTEM_PROMPT, prompt, onDelta);
@@ -217,31 +215,31 @@ public class TravelAssistantService {
 
     private String buildSpotPlanPrompt(PortalSpotPlanRequest request, int travelers) {
         return """
-                Please create a practical travel plan focused on this spot:
-                - Spot title: %s
-                - Spot location: %s
-                - Departure city: %s
-                - Date range: %s to %s
-                - Travelers: %d
-                - Budget: %s
-                - Preference: %s
+                请围绕以下景点生成实用旅行方案：
+                - 景点名称：%s
+                - 景点位置：%s
+                - 出发地：%s
+                - 日期范围：%s 到 %s
+                - 出行人数：%d
+                - 预算：%s
+                - 偏好：%s
 
-                Output requirements:
-                1) Suitable traveler profile and highlight of this spot
-                2) Day-by-day schedule (morning/afternoon/evening)
-                3) Transport suggestion between key locations
-                4) Budget breakdown (transport/hotel/food/tickets)
-                5) 5 practical anti-pitfall tips
-                6) Keep answer concise and executable
+                输出要求：
+                1) 适配人群与核心亮点
+                2) 逐日安排（上午/下午/晚上）
+                3) 关键地点之间的交通建议
+                4) 预算拆分（交通/住宿/餐饮/门票）
+                5) 5 条实用避坑建议
+                6) 整体简洁、可执行
                 """.formatted(
-                blankToDefault(request.title(), "Unknown spot"),
-                blankToDefault(request.location(), "Unknown location"),
-                blankToDefault(request.departureCity(), "Shanghai"),
-                blankToDefault(request.startDate(), "TBD"),
-                blankToDefault(request.endDate(), "TBD"),
+                blankToDefault(request.title(), "未知景点"),
+                blankToDefault(request.location(), "未知位置"),
+                blankToDefault(request.departureCity(), "上海"),
+                blankToDefault(request.startDate(), "待定"),
+                blankToDefault(request.endDate(), "待定"),
                 travelers,
-                blankToDefault(request.budget(), "medium"),
-                blankToDefault(request.preference(), "relaxed")
+                blankToDefault(request.budget(), "中等预算"),
+                blankToDefault(request.preference(), "轻松")
         );
     }
 
@@ -249,3 +247,4 @@ public class TravelAssistantService {
         return text == null || text.isBlank() ? defaultValue : text;
     }
 }
+

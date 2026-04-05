@@ -8,6 +8,8 @@ public record AgentChatRequest(
         Integer topK,
         String sourceType,
         String sourceRefContains,
+        String toolMode,
+        Boolean allowHighRiskTools,
         Boolean includeTrace
 ) {
 }

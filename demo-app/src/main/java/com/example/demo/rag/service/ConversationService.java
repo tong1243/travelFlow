@@ -115,7 +115,7 @@ public class ConversationService {
             redisTemplate.opsForList().trim(key, -CACHE_MAX_MESSAGES, -1);
             redisTemplate.expire(key, Duration.ofDays(7));
         } catch (JsonProcessingException ex) {
-            // Ignore cache serialization errors; DB is still source of truth.
+            // 缓存序列化失败时忽略，数据库仍是最终数据源。
         }
     }
 
@@ -131,7 +131,7 @@ public class ConversationService {
             try {
                 cached.add(objectMapper.readValue(item, CachedMessage.class));
             } catch (JsonProcessingException ignored) {
-                // Ignore malformed cached item.
+                // 缓存项格式异常时忽略，避免影响主流程。
             }
         }
         cached.sort(Comparator.comparing(CachedMessage::createdAt));

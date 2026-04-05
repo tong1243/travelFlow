@@ -15,22 +15,22 @@ import java.util.Map;
 public class RagLangChainComposer {
 
     private static final String SYSTEM_PROMPT = """
-            You are an AI travel assistant.
-            - Give practical and safe travel guidance.
-            - Prefer information from provided knowledge context.
-            - If context is insufficient, explicitly say what is uncertain.
-            - Keep answer structured with clear actionable suggestions.
-            - Use concise section titles in Markdown.
+            你是一个旅游规划助手。
+            - 优先基于提供的知识上下文回答，避免编造事实。
+            - 结论要可执行，优先给出明确步骤和建议。
+            - 若证据不足，请明确指出不确定点。
+            - 输出保持结构化，使用简洁的 Markdown 小标题。
+            - 默认使用中文回答。
             """;
 
     private static final PromptTemplate KNOWLEDGE_TEMPLATE = PromptTemplate.from("""
-            Knowledge context from retrieval:
+            以下是检索得到的知识上下文：
             {{knowledge_context}}
 
-            Response policy:
-            1) Cite sources by reference index like [1], [2].
-            2) If evidence is weak, explicitly flag uncertainty.
-            3) Do not fabricate unavailable details.
+            回答规则：
+            1) 引用信息时用 [1] [2] 这类编号标注。
+            2) 如果证据较弱，必须显式提示不确定性。
+            3) 不要补造上下文中不存在的细节。
             """);
 
     public List<Map<String, String>> composeMessages(List<ConversationService.ContextMessage> history,
@@ -40,7 +40,6 @@ public class RagLangChainComposer {
         messages.add(message("system", SYSTEM_PROMPT));
 
         if (ragContextText != null && !ragContextText.isBlank()) {
-            // LangChain template keeps context composition centralized and reusable.
             Prompt prompt = KNOWLEDGE_TEMPLATE.apply(Map.of("knowledge_context", ragContextText));
             messages.add(message("system", prompt.text()));
         }
@@ -56,7 +55,7 @@ public class RagLangChainComposer {
         }
 
         if (references == null || references.isEmpty()) {
-            messages.add(message("system", "No external reference found for this turn."));
+            messages.add(message("system", "本轮未检索到外部参考资料，请明确说明不确定性并给出保守建议。"));
         }
         return messages;
     }
@@ -68,3 +67,4 @@ public class RagLangChainComposer {
         return item;
     }
 }
+

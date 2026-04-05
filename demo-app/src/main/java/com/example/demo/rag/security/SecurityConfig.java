@@ -3,6 +3,7 @@ package com.example.demo.rag.security;
 import com.example.demo.rag.filter.ApiAccessLogFilter;
 import com.example.demo.rag.filter.ApiRateLimitFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,6 +47,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                         .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/travel/**").authenticated()
@@ -84,7 +86,7 @@ public class SecurityConfig {
             );
             response.getWriter().write(objectMapper.writeValueAsString(body));
         } catch (Exception ignored) {
-            // Ignore writing exceptions in auth handlers.
+            // 鉴权处理器写响应异常时忽略，避免再次抛错影响主流程。
         }
     }
 }

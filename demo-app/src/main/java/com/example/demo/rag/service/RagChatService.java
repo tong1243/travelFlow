@@ -74,15 +74,15 @@ public class RagChatService {
         int index = 1;
         for (RagReferenceItem item : references) {
             String line = """
-                    [%d] %s | sourceType=%s | sourceRef=%s
-                    score=%.4f, vector=%.4f, lexical=%.4f, rerank=%.4f
+                    [%d] %s | 来源类型=%s | 来源标识=%s
+                    综合分=%.4f, 向量分=%.4f, 词法分=%.4f, 重排分=%.4f
                     %s
                     
                     """.formatted(
                     index++,
                     item.documentTitle(),
-                    fallback(item.sourceType(), "N/A"),
-                    fallback(item.sourceRef(), "N/A"),
+                    fallback(item.sourceType(), "未知"),
+                    fallback(item.sourceRef(), "未知"),
                     item.score(),
                     item.vectorScore(),
                     item.lexicalScore(),
@@ -101,3 +101,4 @@ public class RagChatService {
         return text == null || text.isBlank() ? defaultValue : text;
     }
 }
+

@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 
 @Component
 public class BailianClient {
-    private static final String CONTINUE_PROMPT = "Please continue from where your previous response stopped. Do not repeat generated parts and keep the same language and Markdown format.";
+    private static final String CONTINUE_PROMPT = "请从上一次中断处继续生成，不要重复已输出内容，并保持相同语言与 Markdown 格式。";
 
     private final BailianProperties properties;
     private final ObjectMapper objectMapper;
@@ -48,7 +48,7 @@ public class BailianClient {
     public FileUploadResult uploadFile(MultipartFile file, String purpose) {
         requireApiKey();
         if (file == null || file.isEmpty()) {
-            throw new AssistantException("Uploaded file must not be empty.");
+            throw new AssistantException("上传文件不能为空。");
         }
 
         String safePurpose = blankToDefault(purpose, "file-extract");
@@ -66,7 +66,7 @@ public class BailianClient {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new AssistantException("Bailian file upload failed, HTTP " + response.statusCode() + ", body: " + response.body());
+                throw new AssistantException("百炼文件上传失败，HTTP " + response.statusCode() + "，响应: " + response.body());
             }
             JsonNode root = objectMapper.readTree(response.body());
             return new FileUploadResult(
@@ -77,9 +77,9 @@ public class BailianClient {
             );
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new AssistantException("Bailian file upload interrupted: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼文件上传被中断: " + ex.getMessage(), ex);
         } catch (IOException ex) {
-            throw new AssistantException("Bailian file upload failed: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼文件上传失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -96,11 +96,11 @@ public class BailianClient {
 
     public String chatWithFiles(String model, String systemPrompt, List<String> fileIds, String userPrompt) {
         if (fileIds == null || fileIds.isEmpty()) {
-            throw new AssistantException("fileIds must not be empty.");
+            throw new AssistantException("文件 ID 列表不能为空。");
         }
         String joinedFileIds = String.join(",", fileIds.stream().filter(Objects::nonNull).map(String::trim).toList());
         if (joinedFileIds.isBlank()) {
-            throw new AssistantException("fileIds must not be empty.");
+            throw new AssistantException("文件 ID 列表不能为空。");
         }
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(message("system", systemPrompt));
@@ -111,14 +111,14 @@ public class BailianClient {
 
     public String chatWithMessages(String model, List<Map<String, String>> messages) {
         if (messages == null || messages.isEmpty()) {
-            throw new AssistantException("messages must not be empty.");
+            throw new AssistantException("消息列表不能为空。");
         }
         return chatRaw(model, messages);
     }
 
     public void chatStream(String model, String systemPrompt, String userPrompt, Consumer<String> onDelta) {
         if (onDelta == null) {
-            throw new AssistantException("onDelta callback must not be null.");
+            throw new AssistantException("流式回调函数不能为空。");
         }
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(message("system", systemPrompt));
@@ -131,7 +131,7 @@ public class BailianClient {
     public List<Double> embed(String text) {
         requireApiKey();
         if (text == null || text.isBlank()) {
-            throw new AssistantException("text for embedding must not be empty.");
+            throw new AssistantException("用于向量化的文本不能为空。");
         }
 
         String endpoint = normalizeBaseUrl() + "/embeddings";
@@ -151,14 +151,14 @@ public class BailianClient {
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new AssistantException("Bailian embedding failed, HTTP " + response.statusCode() + ", body: " + response.body());
+                throw new AssistantException("百炼向量化失败，HTTP " + response.statusCode() + "，响应: " + response.body());
             }
             return extractEmbedding(response.body());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new AssistantException("Bailian embedding interrupted: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼向量化被中断: " + ex.getMessage(), ex);
         } catch (IOException ex) {
-            throw new AssistantException("Bailian embedding failed: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼向量化失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -198,7 +198,7 @@ public class BailianClient {
                         return chatRawInternal(fallbackModel, messages, false, allowAutoContinue);
                     }
                 }
-                throw new AssistantException("Bailian chat failed, HTTP " + response.statusCode() + ", body: " + response.body());
+                throw new AssistantException("百炼对话失败，HTTP " + response.statusCode() + "，响应: " + response.body());
             }
             ChatCompletionResult assistantResult = extractAssistantResult(response.body());
             if (allowAutoContinue && isTruncatedFinishReason(assistantResult.finishReason())) {
@@ -211,7 +211,7 @@ public class BailianClient {
             return assistantResult.content();
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new AssistantException("Bailian chat interrupted: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼对话被中断: " + ex.getMessage(), ex);
         } catch (IOException ex) {
             if (allowFallback && isTimeoutException(ex)) {
                 String fallbackModel = properties.getFallbackModel();
@@ -219,7 +219,7 @@ public class BailianClient {
                     return chatRawInternal(fallbackModel, messages, false, allowAutoContinue);
                 }
             }
-            throw new AssistantException("Bailian chat failed: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼对话失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -257,7 +257,7 @@ public class BailianClient {
                         return;
                     }
                 }
-                throw new AssistantException("Bailian stream chat failed, HTTP " + response.statusCode() + ", body: " + errorBody);
+                throw new AssistantException("百炼流式对话失败，HTTP " + response.statusCode() + "，响应: " + errorBody);
             }
 
             StreamChatResult streamResult = readStreamAndForward(response.body(), onDelta);
@@ -270,7 +270,7 @@ public class BailianClient {
             }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new AssistantException("Bailian stream chat interrupted: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼流式对话被中断: " + ex.getMessage(), ex);
         } catch (IOException ex) {
             if (allowFallback && isTimeoutException(ex)) {
                 String fallbackModel = properties.getFallbackModel();
@@ -279,7 +279,7 @@ public class BailianClient {
                     return;
                 }
             }
-            throw new AssistantException("Bailian stream chat failed: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼流式对话失败: " + ex.getMessage(), ex);
         }
     }
 
@@ -337,7 +337,7 @@ public class BailianClient {
             embeddingNode = root.path("output").path("embeddings").path(0).path("embedding");
         }
         if (!embeddingNode.isArray() || embeddingNode.isEmpty()) {
-            throw new AssistantException("Cannot parse embedding vector from Bailian response.");
+            throw new AssistantException("无法从百炼响应中解析向量结果。");
         }
 
         List<Double> vector = new ArrayList<>(embeddingNode.size());
@@ -349,7 +349,7 @@ public class BailianClient {
 
     private void requireApiKey() {
         if (properties.getApiKey() == null || properties.getApiKey().isBlank()) {
-            throw new AssistantException("Bailian API key is missing. Please set DASHSCOPE_API_KEY or bailian.api-key.");
+            throw new AssistantException("百炼 API Key 缺失，请设置 DASHSCOPE_API_KEY 或 bailian.api-key。");
         }
     }
 
@@ -469,7 +469,7 @@ public class BailianClient {
         try {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException ex) {
-            return "<failed to read error body>";
+            return "<读取错误响应失败>";
         }
     }
 

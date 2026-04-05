@@ -56,7 +56,7 @@ public class KnowledgeBaseService {
     @Transactional
     public void deleteDocument(Long documentId) {
         KnowledgeDocument document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new RagException("Knowledge document not found: " + documentId));
+                .orElseThrow(() -> new RagException("知识文档不存在: " + documentId));
 
         List<KnowledgeChunk> chunks = chunkRepository.findByDocumentIdOrderByChunkIndexAsc(documentId);
         List<String> pointIds = chunks.stream().map(KnowledgeChunk::getPointId).toList();
@@ -74,13 +74,13 @@ public class KnowledgeBaseService {
 
     public KnowledgeUpsertRequest parseUploadToRequest(String title, String sourceType, String sourceRef, byte[] bytes) {
         if (bytes == null || bytes.length == 0) {
-            throw new RagException("Uploaded knowledge file is empty.");
+            throw new RagException("上传的知识文件为空。");
         }
         String content = new String(bytes, StandardCharsets.UTF_8).trim();
         if (content.isBlank()) {
-            throw new RagException("Uploaded knowledge file has no readable text content.");
+            throw new RagException("上传的知识文件没有可读取的文本内容。");
         }
-        String safeTitle = (title == null || title.isBlank()) ? "Uploaded Knowledge" : title.trim();
+        String safeTitle = (title == null || title.isBlank()) ? "上传知识文档" : title.trim();
         return new KnowledgeUpsertRequest(safeTitle, content, sourceType, sourceRef);
     }
 
@@ -109,7 +109,7 @@ public class KnowledgeBaseService {
                 continue;
             }
             KnowledgeDocument document = docsById.get(chunk.getDocumentId());
-            String title = document == null ? "Unknown Document" : document.getTitle();
+            String title = document == null ? "未知文档" : document.getTitle();
             String sourceType = document == null ? null : document.getSourceType();
             String sourceRef = document == null ? null : document.getSourceRef();
             double vectorScore = scoreByPointId.getOrDefault(pointId, 0.0);
@@ -153,7 +153,7 @@ public class KnowledgeBaseService {
 
     private KnowledgeDocumentResponse upsertInternal(Long documentId, KnowledgeUpsertRequest request, Long operatorId) {
         if (request.content() == null || request.content().isBlank()) {
-            throw new RagException("Knowledge content must not be empty.");
+            throw new RagException("知识内容不能为空。");
         }
 
         KnowledgeDocument document;
@@ -163,7 +163,7 @@ public class KnowledgeBaseService {
             document.setVersionNo(1);
         } else {
             document = documentRepository.findById(documentId)
-                    .orElseThrow(() -> new RagException("Knowledge document not found: " + documentId));
+                    .orElseThrow(() -> new RagException("知识文档不存在: " + documentId));
             cleanupDocumentChunks(document.getId());
             document.setVersionNo(document.getVersionNo() + 1);
         }
@@ -177,7 +177,7 @@ public class KnowledgeBaseService {
         KnowledgeDocument savedDocument = documentRepository.save(document);
         List<String> chunks = textChunkingService.splitToChunks(savedDocument.getContent());
         if (chunks.isEmpty()) {
-            throw new RagException("No valid chunk generated from knowledge content.");
+            throw new RagException("知识内容未生成有效分片。");
         }
 
         List<KnowledgeChunk> chunkEntities = new ArrayList<>();

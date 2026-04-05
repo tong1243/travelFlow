@@ -191,7 +191,7 @@ function normalizeDateQuery(text: string): string {
           <template #title>待确认任务</template>
           <div class="assistant-pending-line">{{ pendingPlan.label }}</div>
           <div class="pending-actions">
-            <el-button type="primary" round :loading="isLoading" :disabled="!isLoggedIn" @click="confirmPendingPlan">
+            <el-button type="primary" round :loading="isLoading" @click="confirmPendingPlan">
               确认生成{{ useAgentMode ? 'Agent' : 'RAG' }}方案
             </el-button>
             <el-button round :disabled="isLoading" @click="clearPendingPlan">取消</el-button>
@@ -320,7 +320,7 @@ function normalizeDateQuery(text: string): string {
         </el-form>
 
         <div v-if="!pendingPlan || canRetryGeneration || isLoading" class="assistant-actions">
-          <el-button v-if="!pendingPlan" type="primary" round :loading="isLoading" :disabled="!isLoggedIn" @click="confirmPendingPlan">
+          <el-button v-if="!pendingPlan" type="primary" round :loading="isLoading" @click="confirmPendingPlan">
             确认生成{{ useAgentMode ? 'Agent' : 'RAG' }}方案
           </el-button>
           <el-button v-if="canRetryGeneration && !isLoading" round @click="retryGeneration">重试生成</el-button>

@@ -71,6 +71,10 @@ const showSuggestionEmpty = computed(
   () => showSuggest.value && searchKeyword.value.trim().length > 0 && matchedSuggestions.value.length === 0,
 )
 
+const showSuggestionPanel = computed(
+  () => showSuggest.value && (matchedSuggestions.value.length > 0 || searchKeyword.value.trim().length > 0),
+)
+
 let suggestDebounce: ReturnType<typeof setTimeout> | null = null
 
 watch(searchKeyword, (value) => {
@@ -150,7 +154,7 @@ async function handleStartWay(keyword: string, title: string) {
           </button>
         </div>
 
-          <ul v-if="showSuggest && matchedSuggestions.length > 0" class="suggest-list suggest-list-home">
+        <ul v-if="showSuggestionPanel" class="suggest-list suggest-list-home">
           <li v-for="item in matchedSuggestions" :key="item" @mousedown.prevent="pickSuggestion(item)">
             {{ item }}
           </li>
@@ -158,7 +162,7 @@ async function handleStartWay(keyword: string, title: string) {
         </ul>
       </div>
 
-      <p class="hero-login-tip">可先体验一次生成；登录后可保存结果、继续编辑和追问。</p>
+      <p class="hero-login-tip">登录后可生成方案、保存结果、继续编辑和追问。</p>
       <p v-if="errorMessage" class="error-banner">{{ errorMessage }}</p>
     </section>
 
