@@ -8,8 +8,20 @@ public record AgentChatRequest(
         Integer topK,
         String sourceType,
         String sourceRefContains,
-        String toolMode,
         Boolean allowHighRiskTools,
-        Boolean includeTrace
+        Boolean includeTrace,
+        String travelMode,
+        Boolean hotelRecommendation,
+        String hotelPreference,
+        String hotelPriceRange,
+        Boolean weatherQuery,
+        String departureCity,
+        String destinationCity,
+        String travelStartDate,
+        String travelEndDate,
+        Integer travelers,
+        String budget,
+        String companionType,
+        String travelStyle
 ) {
 }

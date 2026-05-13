@@ -2,8 +2,10 @@ package com.example.demo.assistant;
 
 import com.example.demo.assistant.dto.ErrorResponse;
 import com.example.demo.rag.RagException;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,7 +35,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .findFirst()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .map(error -> error.getDefaultMessage() == null ? "请求参数不合法。" : error.getDefaultMessage())
                 .orElse("请求参数不合法。");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(localizeMessage(message), Instant.now()));
@@ -42,13 +44,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(new ErrorResponse("请求方法不支持：" + ex.getMethod(), Instant.now()));
+                .body(new ErrorResponse("请求方法不支持。", Instant.now()));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorResponse("请求资源不存在：" + ex.getResourcePath(), Instant.now()));
+                .body(new ErrorResponse("请求资源不存在。", Instant.now()));
     }
 
     @ExceptionHandler(ResponseStatusException.class)
@@ -62,6 +64,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse(localizeMessage(ex.getMessage()), Instant.now()));
+    }
+
+    @ExceptionHandler(HttpMessageNotWritableException.class)
+    public ResponseEntity<String> handleMessageNotWritable(HttpMessageNotWritableException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.TEXT_PLAIN)
+                .body("响应写出失败，请稍后重试。");
     }
 
     private String localizeMessage(String message) {
@@ -89,7 +98,7 @@ public class GlobalExceptionHandler {
             return "服务器内部错误，请稍后重试。";
         }
         if (lowered.contains("communications link failure") || lowered.contains("connection refused")) {
-            return "数据库连接失败，请检查 MySQL 是否启动。";
+            return "数据库连接失败，请检查数据库服务是否启动。";
         }
         if (lowered.contains("access denied for user")) {
             return "数据库账号或密码错误，请检查数据源配置。";

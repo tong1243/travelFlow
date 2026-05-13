@@ -8,27 +8,37 @@ import com.example.demo.assistant.dto.TravelPlanByFilesRequest;
 import com.example.demo.assistant.dto.TravelPlanRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.function.Consumer;
 
 @Service
 public class TravelAssistantService {
 
-    private static final String TRAVEL_SYSTEM_PROMPT = """
+    private static final String DEFAULT_MAIN_PROMPT_TEMPLATE = """
             你是一名资深旅行规划顾问，擅长行程设计、预算拆解、交通衔接和风险提示。
+            当前服务器时间：%s（时区：%s）
             回答要求：
             1) 信息真实可执行，避免空话。
-            2) 输出结构化，优先使用 Markdown 标题和列表。
+            2) 输出结构化，优先使用分级标题和列表。
             3) 优先考虑省时、省钱、少踩坑。
             4) 默认使用中文。
             """;
+    private static final DateTimeFormatter PROMPT_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX");
 
     private final BailianClient bailianClient;
     private final BailianProperties properties;
+    private final PromptFileService promptFileService;
 
-    public TravelAssistantService(BailianClient bailianClient, BailianProperties properties) {
+    public TravelAssistantService(BailianClient bailianClient,
+                                  BailianProperties properties,
+                                  PromptFileService promptFileService) {
         this.bailianClient = bailianClient;
         this.properties = properties;
+        this.promptFileService = promptFileService;
     }
 
     public AssistantResult generateTravelPlan(TravelPlanRequest request) {
@@ -65,14 +75,14 @@ public class TravelAssistantService {
                 blankToDefault(request.notes(), "无")
         );
 
-        String content = bailianClient.chat(properties.getDefaultModel(), TRAVEL_SYSTEM_PROMPT, prompt);
+        String content = bailianClient.chat(properties.getDefaultModel(), buildSystemPrompt(), prompt);
         return new AssistantResult("bailian", properties.getDefaultModel(), content);
     }
 
     public void streamTravelPlan(TravelPlanRequest request, Consumer<String> onDelta) {
         int travelers = request.travelers() == null || request.travelers() <= 0 ? 1 : request.travelers();
         String prompt = """
-                请用中文生成一份实用的 Markdown 旅行方案：
+                请用中文生成一份实用的结构化旅行方案：
                 - 目的地：%s
                 - 出发地：%s
                 - 日期范围：%s 到 %s
@@ -99,7 +109,7 @@ public class TravelAssistantService {
                 blankToDefault(request.travelStyle(), "轻松"),
                 blankToDefault(request.notes(), "无")
         );
-        bailianClient.chatStream(properties.getDefaultModel(), TRAVEL_SYSTEM_PROMPT, prompt, onDelta);
+        bailianClient.chatStream(properties.getDefaultModel(), buildSystemPrompt(), prompt, onDelta);
     }
 
     public AssistantResult estimateBudget(TravelBudgetRequest request) {
@@ -125,13 +135,13 @@ public class TravelAssistantService {
                 request.destination(),
                 days,
                 travelers,
-                blankToDefault(request.budgetCurrency(), "CNY"),
+                blankToDefault(request.budgetCurrency(), "人民币"),
                 blankToDefault(request.expectedBudget(), "未提供"),
                 blankToDefault(request.travelStyle(), "平衡"),
                 blankToDefault(request.notes(), "无")
         );
 
-        String content = bailianClient.chat(properties.getDefaultModel(), TRAVEL_SYSTEM_PROMPT, prompt);
+        String content = bailianClient.chat(properties.getDefaultModel(), buildSystemPrompt(), prompt);
         return new AssistantResult("bailian", properties.getDefaultModel(), content);
     }
 
@@ -141,7 +151,7 @@ public class TravelAssistantService {
                 .map(String::trim)
                 .toList();
         if (fileIds.isEmpty()) {
-            throw new AssistantException("fileIds 不能为空");
+            throw new AssistantException("文件编号列表不能为空");
         }
 
         String prompt = """
@@ -156,7 +166,7 @@ public class TravelAssistantService {
                 4) 输出控制在 900 字以内
                 """.formatted(blankToDefault(request.requirement(), "请优先保证行程可执行"));
 
-        String content = bailianClient.chatWithFiles(properties.getFileModel(), TRAVEL_SYSTEM_PROMPT, fileIds, prompt);
+        String content = bailianClient.chatWithFiles(properties.getFileModel(), buildSystemPrompt(), fileIds, prompt);
         return new AssistantResult("bailian", properties.getFileModel(), content);
     }
 
@@ -170,7 +180,7 @@ public class TravelAssistantService {
 
         String content = bailianClient.chatWithFiles(
                 properties.getFileModel(),
-                TRAVEL_SYSTEM_PROMPT,
+                buildSystemPrompt(),
                 List.of(fileId),
                 prompt
         );
@@ -180,14 +190,14 @@ public class TravelAssistantService {
     public AssistantResult generateSpotPlan(PortalSpotPlanRequest request) {
         int travelers = request.travelers() == null || request.travelers() <= 0 ? 1 : request.travelers();
         String prompt = buildSpotPlanPrompt(request, travelers);
-        String content = bailianClient.chat(properties.getDefaultModel(), TRAVEL_SYSTEM_PROMPT, prompt);
+        String content = bailianClient.chat(properties.getDefaultModel(), buildSystemPrompt(), prompt);
         return new AssistantResult("bailian", properties.getDefaultModel(), content);
     }
 
     public void streamSpotPlan(PortalSpotPlanRequest request, Consumer<String> onDelta) {
         int travelers = request.travelers() == null || request.travelers() <= 0 ? 1 : request.travelers();
         String prompt = buildSpotPlanPrompt(request, travelers);
-        bailianClient.chatStream(properties.getDefaultModel(), TRAVEL_SYSTEM_PROMPT, prompt, onDelta);
+        bailianClient.chatStream(properties.getDefaultModel(), buildSystemPrompt(), prompt, onDelta);
     }
 
     public void streamFollowUp(TravelFollowUpRequest request, Consumer<String> onDelta) {
@@ -202,7 +212,7 @@ public class TravelAssistantService {
                 %s
 
                 回答要求：
-                1) 使用中文并保持 Markdown 结构；
+                1) 使用中文并保持结构化格式；
                 2) 与上一轮方案保持上下文一致；
                 3) 内容具体、可执行；
                 4) 若上一轮存在问题，请明确纠正。
@@ -210,7 +220,7 @@ public class TravelAssistantService {
                 blankToDefault(request.previousAnswer(), "无"),
                 blankToDefault(request.question(), "")
         );
-        bailianClient.chatStream(properties.getDefaultModel(), TRAVEL_SYSTEM_PROMPT, prompt, onDelta);
+        bailianClient.chatStream(properties.getDefaultModel(), buildSystemPrompt(), prompt, onDelta);
     }
 
     private String buildSpotPlanPrompt(PortalSpotPlanRequest request, int travelers) {
@@ -246,5 +256,26 @@ public class TravelAssistantService {
     private String blankToDefault(String text, String defaultValue) {
         return text == null || text.isBlank() ? defaultValue : text;
     }
-}
 
+    private String buildSystemPrompt() {
+        ZoneId zone = ZoneId.systemDefault();
+        String now = OffsetDateTime.now(zone).format(PROMPT_TIME_FORMATTER);
+        String template = promptFileService.loadOrDefault("main_prompt.txt", DEFAULT_MAIN_PROMPT_TEMPLATE);
+        return renderPromptWithTime(template, now, zone.getId());
+    }
+
+    private String renderPromptWithTime(String template, String now, String zoneId) {
+        String rendered = template
+                .replace("{{now}}", now)
+                .replace("{{timezone}}", zoneId);
+        if (rendered.contains("%s")) {
+            try {
+                return rendered.formatted(now, zoneId);
+            } catch (IllegalFormatException ex) {
+                // 若用户提示词包含未转义百分号，回退到安全拼接，避免请求失败。
+                return rendered + System.lineSeparator() + "当前服务器时间：" + now + "（时区：" + zoneId + "）";
+            }
+        }
+        return rendered;
+    }
+}

@@ -142,7 +142,7 @@ async function goNext(answer: string) {
   const next = stepIndex.value + 1
   if (next >= STEPS.length) {
     stepIndex.value = STEPS.length
-    await pushAI('已收集完成。你可以在下方继续编辑，然后去 AI 助手生成完整方案。')
+    await pushAI('已收集完成。你可以在下方继续编辑，然后去智能助手生成完整方案。')
     return
   }
 
@@ -521,7 +521,7 @@ function formatDate(date: Date) {
         </div>
 
         <div class="pt-actions">
-          <button class="btn-primary" @click="goToAssistant">去 AI 助手生成方案</button>
+          <button class="btn-primary" @click="goToAssistant">去智能助手生成方案</button>
           <button class="btn-ghost" @click="startGuide">重新填写</button>
         </div>
       </div>

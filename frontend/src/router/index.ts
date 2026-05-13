@@ -9,6 +9,7 @@ import GuideDetailPage from '../pages/GuideDetailPage.vue'
 import GuidesPage from '../pages/GuidesPage.vue'
 import TripsPage from '../pages/TripsPage.vue'
 import PersonalizedTripPage from '../pages/PersonalizedTripPage.vue'
+import PreferencesPage from '../pages/PreferencesPage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -20,6 +21,7 @@ const router = createRouter({
     { path: '/deals', name: 'deals', component: DealsPage },
     { path: '/guides', name: 'guides', component: GuidesPage },
     { path: '/trips', name: 'trips', component: TripsPage },
+    { path: '/preferences', name: 'preferences', component: PreferencesPage },
     { path: '/enterprise', name: 'enterprise', component: EnterprisePage },
     { path: '/guide', name: 'guide-detail', component: GuideDetailPage },
     { path: '/admin', name: 'admin', component: AdminDashboardPage },

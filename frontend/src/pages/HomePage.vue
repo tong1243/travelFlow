@@ -61,7 +61,7 @@ const startWays = [
   },
   {
     title: '按旅行风格开始',
-    desc: '适合有偏好用户，如慢旅行、Citywalk、美食向。',
+    desc: '适合有偏好用户，如慢旅行、城市漫步、美食向。',
     keyword: '成都慢旅行 美食为主 4 天',
     cta: '生成慢旅行路线',
   },
@@ -106,7 +106,7 @@ async function startAiPlanning() {
   if (!searchKeyword.value.trim()) {
     fillKeyword(sampleKeywords[0])
   }
-  await goAssistantWithKeyword('开始 AI 规划')
+  await goAssistantWithKeyword('开始智能规划')
 }
 
 async function handleIntentChipClick(label: string, keyword: string) {
@@ -125,8 +125,8 @@ async function handleStartWay(keyword: string, title: string) {
   <main class="main-content">
     <section class="hero-section reveal">
       <div class="hero-copy">
-        <p class="hero-tag">AI 智能旅行决策平台</p>
-        <h1>说出你的旅行想法，<br />AI 帮你快速生成路线</h1>
+        <p class="hero-tag">智能旅行决策平台</p>
+        <h1>说出你的旅行想法，<br />智能助手帮你快速生成路线</h1>
         <p class="hero-subtitle">
           输入目的地、预算、天数或同行人，点击后即可获得目的地建议、初步路线和预算拆分。
         </p>
@@ -142,7 +142,7 @@ async function handleStartWay(keyword: string, title: string) {
             @blur="onBlurSearch"
             @keyup.enter="startAiPlanning"
           />
-          <button class="search-button" @click="startAiPlanning">开始 AI 规划</button>
+          <button class="search-button" @click="startAiPlanning">开始智能规划</button>
         </div>
 
         <p class="search-result-tip">30 秒内给你目的地建议和初步路线</p>
@@ -158,7 +158,7 @@ async function handleStartWay(keyword: string, title: string) {
           <li v-for="item in matchedSuggestions" :key="item" @mousedown.prevent="pickSuggestion(item)">
             {{ item }}
           </li>
-          <li v-if="showSuggestionEmpty" class="suggest-empty">暂无匹配建议，可点示例词或直接开始 AI 规划。</li>
+          <li v-if="showSuggestionEmpty" class="suggest-empty">暂无匹配建议，可点示例词或直接开始智能规划。</li>
         </ul>
       </div>
 
@@ -203,7 +203,7 @@ async function handleStartWay(keyword: string, title: string) {
     <section class="portal-entry-grid reveal-delay-4">
       <article class="portal-entry-card">
         <h4>灵感地图</h4>
-        <p>适合没想好去哪的人；浏览灵感图后可一键回到 AI 助手继续规划。</p>
+        <p>适合没想好去哪的人；浏览灵感图后可一键回到智能助手继续规划。</p>
         <button class="entry-button" @click="router.push('/inspiration')">进入灵感地图</button>
       </article>
       <article class="portal-entry-card">
@@ -213,7 +213,7 @@ async function handleStartWay(keyword: string, title: string) {
       </article>
       <article class="portal-entry-card">
         <h4>限时特惠 / 热门景点</h4>
-        <p>适合价格敏感用户；先比价格和评分，再回到 AI 助手重算行程。</p>
+        <p>适合价格敏感用户；先比价格和评分，再回到智能助手重算行程。</p>
         <button class="entry-button" @click="router.push('/deals')">进入特惠景点</button>
       </article>
     </section>

@@ -41,8 +41,8 @@ public class TravelController {
                 sendEvent(emitter, "done", "[DONE]");
                 emitter.complete();
             } catch (Exception ex) {
-                sendEvent(emitter, "error", ex.getMessage() == null ? "Stream failed." : ex.getMessage());
-                emitter.completeWithError(ex);
+                sendEvent(emitter, "error", ex.getMessage() == null ? "流式输出失败。" : ex.getMessage());
+                emitter.complete();
             }
         });
         return emitter;
@@ -57,8 +57,8 @@ public class TravelController {
                 sendEvent(emitter, "done", "[DONE]");
                 emitter.complete();
             } catch (Exception ex) {
-                sendEvent(emitter, "error", ex.getMessage() == null ? "Stream failed." : ex.getMessage());
-                emitter.completeWithError(ex);
+                sendEvent(emitter, "error", ex.getMessage() == null ? "流式输出失败。" : ex.getMessage());
+                emitter.complete();
             }
         });
         return emitter;
@@ -85,8 +85,8 @@ public class TravelController {
     private static void sendEvent(SseEmitter emitter, String eventName, String data) {
         try {
             emitter.send(SseEmitter.event().name(eventName).data(data == null ? "" : data));
-        } catch (Exception ex) {
-            throw new AssistantException("Failed to push stream event.", ex);
+        } catch (Exception ignored) {
+            // 客户端主动断开或网络抖动时，忽略发送异常，避免触发二次异常处理。
         }
     }
 }

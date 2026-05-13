@@ -208,19 +208,19 @@ public class PortalDataInitializer implements CommandLineRunner {
                 0,
                 "第一次带父母出境？这份省心清单请收藏",
                 "https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=1000&q=80",
-                "21.4k"
+                "2.14万"
         );
         seedGuide(
                 1,
                 "雨季也好玩：东南亚避坑与替代玩法",
                 "https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=1000&q=80",
-                "16.8k"
+                "1.68万"
         );
         seedGuide(
                 2,
                 "预算不变体验翻倍：机酒组合最优解",
                 "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1000&q=80",
-                "12.9k"
+                "1.29万"
         );
     }
 
@@ -229,8 +229,8 @@ public class PortalDataInitializer implements CommandLineRunner {
             return;
         }
         seedEnterprise(0, "商旅管理平台", "统一审批、预算控制、发票归集与出行合规，支持多部门权限管理。");
-        seedEnterprise(1, "开放 API 接入", "提供行程推荐、目的地画像、供应商聚合能力，可快速接入现有系统。");
-        seedEnterprise(2, "SaaS 定制方案", "按业务场景定制推荐规则、品牌样式与权限模型，支持私有化部署。");
+        seedEnterprise(1, "开放接口接入", "提供行程推荐、目的地画像、供应商聚合能力，可快速接入现有系统。");
+        seedEnterprise(2, "软件服务定制方案", "按业务场景定制推荐规则、品牌样式与权限模型，支持私有化部署。");
     }
 
     private void seedAdminUser() {

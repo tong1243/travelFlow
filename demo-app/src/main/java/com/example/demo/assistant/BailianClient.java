@@ -30,7 +30,8 @@ import java.util.function.Consumer;
 
 @Component
 public class BailianClient {
-    private static final String CONTINUE_PROMPT = "请从上一次中断处继续生成，不要重复已输出内容，并保持相同语言与 Markdown 格式。";
+    private static final String CONTINUE_PROMPT = "请从上一处中断位置继续生成，不要重复已输出内容，并保持相同语言与结构化格式。";
+    private static final int MAX_AUTO_CONTINUE_ROUNDS = 3;
 
     private final BailianProperties properties;
     private final ObjectMapper objectMapper;
@@ -66,7 +67,7 @@ public class BailianClient {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new AssistantException("百炼文件上传失败，HTTP " + response.statusCode() + "，响应: " + response.body());
+                throw new AssistantException("百炼文件上传失败，状态码 " + response.statusCode() + "，响应：" + response.body());
             }
             JsonNode root = objectMapper.readTree(response.body());
             return new FileUploadResult(
@@ -77,9 +78,9 @@ public class BailianClient {
             );
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new AssistantException("百炼文件上传被中断: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼文件上传被中断：" + ex.getMessage(), ex);
         } catch (IOException ex) {
-            throw new AssistantException("百炼文件上传失败: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼文件上传失败：" + ex.getMessage(), ex);
         }
     }
 
@@ -96,11 +97,11 @@ public class BailianClient {
 
     public String chatWithFiles(String model, String systemPrompt, List<String> fileIds, String userPrompt) {
         if (fileIds == null || fileIds.isEmpty()) {
-            throw new AssistantException("文件 ID 列表不能为空。");
+            throw new AssistantException("文件编号列表不能为空。");
         }
         String joinedFileIds = String.join(",", fileIds.stream().filter(Objects::nonNull).map(String::trim).toList());
         if (joinedFileIds.isBlank()) {
-            throw new AssistantException("文件 ID 列表不能为空。");
+            throw new AssistantException("文件编号列表不能为空。");
         }
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(message("system", systemPrompt));
@@ -125,9 +126,19 @@ public class BailianClient {
         messages.add(message("user", userPrompt));
         requireApiKey();
         String effectiveModel = blankToDefault(model, properties.getDefaultModel());
-        chatStreamInternal(effectiveModel, messages, onDelta, true, true);
+        chatStreamInternal(effectiveModel, messages, onDelta, true, MAX_AUTO_CONTINUE_ROUNDS, true);
     }
-
+    public void chatStreamWithMessages(String model, List<Map<String, String>> messages, Consumer<String> onDelta) {
+        if (messages == null || messages.isEmpty()) {
+            throw new AssistantException("消息列表不能为空。");
+        }
+        if (onDelta == null) {
+            throw new AssistantException("流式回调函数不能为空。");
+        }
+        requireApiKey();
+        String effectiveModel = blankToDefault(model, properties.getDefaultModel());
+        chatStreamInternal(effectiveModel, messages, onDelta, true, MAX_AUTO_CONTINUE_ROUNDS, true);
+    }
     public List<Double> embed(String text) {
         requireApiKey();
         if (text == null || text.isBlank()) {
@@ -151,27 +162,28 @@ public class BailianClient {
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new AssistantException("百炼向量化失败，HTTP " + response.statusCode() + "，响应: " + response.body());
+                throw new AssistantException("百炼向量化失败，状态码 " + response.statusCode() + "，响应：" + response.body());
             }
             return extractEmbedding(response.body());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new AssistantException("百炼向量化被中断: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼向量化被中断：" + ex.getMessage(), ex);
         } catch (IOException ex) {
-            throw new AssistantException("百炼向量化失败: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼向量化失败：" + ex.getMessage(), ex);
         }
     }
 
     private String chatRaw(String model, List<Map<String, String>> messages) {
         requireApiKey();
         String effectiveModel = blankToDefault(model, properties.getDefaultModel());
-        return chatRawInternal(effectiveModel, messages, true, true);
+        return chatRawInternal(effectiveModel, messages, true, MAX_AUTO_CONTINUE_ROUNDS, true);
     }
 
     private String chatRawInternal(String model,
                                    List<Map<String, String>> messages,
                                    boolean allowFallback,
-                                   boolean allowAutoContinue) {
+                                   int remainingAutoContinueRounds,
+                                   boolean allowTimeoutRetry) {
         String endpoint = normalizeBaseUrl() + "/chat/completions";
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("model", model);
@@ -192,34 +204,49 @@ public class BailianClient {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                if (isFallbackModel(model) && isModelNotFound(response.body())) {
+                    String defaultModel = properties.getDefaultModel();
+                    if (isValidFallbackModel(defaultModel, model)) {
+                        return chatRawInternal(defaultModel, messages, false, remainingAutoContinueRounds, allowTimeoutRetry);
+                    }
+                }
                 if (allowFallback && shouldFallbackStatus(response.statusCode())) {
                     String fallbackModel = properties.getFallbackModel();
                     if (isValidFallbackModel(fallbackModel, model)) {
-                        return chatRawInternal(fallbackModel, messages, false, allowAutoContinue);
+                        return chatRawInternal(fallbackModel, messages, false, remainingAutoContinueRounds, allowTimeoutRetry);
                     }
                 }
-                throw new AssistantException("百炼对话失败，HTTP " + response.statusCode() + "，响应: " + response.body());
+                throw new AssistantException("百炼对话失败，状态码 " + response.statusCode() + "，响应：" + response.body());
             }
             ChatCompletionResult assistantResult = extractAssistantResult(response.body());
-            if (allowAutoContinue && isTruncatedFinishReason(assistantResult.finishReason())) {
+            if (remainingAutoContinueRounds > 0 && isTruncatedFinishReason(assistantResult.finishReason())) {
                 List<Map<String, String>> continuationMessages = new ArrayList<>(messages);
                 continuationMessages.add(message("assistant", assistantResult.content()));
                 continuationMessages.add(message("user", CONTINUE_PROMPT));
-                String remainder = chatRawInternal(model, continuationMessages, allowFallback, false);
+                String remainder = chatRawInternal(
+                        model,
+                        continuationMessages,
+                        allowFallback,
+                        remainingAutoContinueRounds - 1,
+                        allowTimeoutRetry
+                );
                 return mergeAnswer(assistantResult.content(), remainder);
             }
             return assistantResult.content();
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new AssistantException("百炼对话被中断: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼对话被中断：" + ex.getMessage(), ex);
         } catch (IOException ex) {
             if (allowFallback && isTimeoutException(ex)) {
                 String fallbackModel = properties.getFallbackModel();
                 if (isValidFallbackModel(fallbackModel, model)) {
-                    return chatRawInternal(fallbackModel, messages, false, allowAutoContinue);
+                    return chatRawInternal(fallbackModel, messages, false, remainingAutoContinueRounds, allowTimeoutRetry);
                 }
             }
-            throw new AssistantException("百炼对话失败: " + ex.getMessage(), ex);
+            if (allowTimeoutRetry && isTimeoutException(ex)) {
+                return chatRawInternal(model, messages, false, remainingAutoContinueRounds, false);
+            }
+            throw new AssistantException("百炼对话失败：" + ex.getMessage(), ex);
         }
     }
 
@@ -227,7 +254,8 @@ public class BailianClient {
                                     List<Map<String, String>> messages,
                                     Consumer<String> onDelta,
                                     boolean allowFallback,
-                                    boolean allowAutoContinue) {
+                                    int remainingAutoContinueRounds,
+                                    boolean allowTimeoutRetry) {
         String endpoint = normalizeBaseUrl() + "/chat/completions";
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("model", model);
@@ -250,36 +278,54 @@ public class BailianClient {
             HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 String errorBody = readBodySafely(response.body());
-                if (allowFallback && shouldFallbackStatus(response.statusCode())) {
-                    String fallbackModel = properties.getFallbackModel();
-                    if (isValidFallbackModel(fallbackModel, model)) {
-                        chatStreamInternal(fallbackModel, messages, onDelta, false, allowAutoContinue);
+                if (isFallbackModel(model) && isModelNotFound(errorBody)) {
+                    String defaultModel = properties.getDefaultModel();
+                    if (isValidFallbackModel(defaultModel, model)) {
+                        chatStreamInternal(defaultModel, messages, onDelta, false, remainingAutoContinueRounds, allowTimeoutRetry);
                         return;
                     }
                 }
-                throw new AssistantException("百炼流式对话失败，HTTP " + response.statusCode() + "，响应: " + errorBody);
+                if (allowFallback && shouldFallbackStatus(response.statusCode())) {
+                    String fallbackModel = properties.getFallbackModel();
+                    if (isValidFallbackModel(fallbackModel, model)) {
+                        chatStreamInternal(fallbackModel, messages, onDelta, false, remainingAutoContinueRounds, allowTimeoutRetry);
+                        return;
+                    }
+                }
+                throw new AssistantException("百炼流式对话失败，状态码 " + response.statusCode() + "，响应：" + errorBody);
             }
 
             StreamChatResult streamResult = readStreamAndForward(response.body(), onDelta);
-            if (allowAutoContinue && isTruncatedFinishReason(streamResult.finishReason())) {
+            if (remainingAutoContinueRounds > 0 && isTruncatedFinishReason(streamResult.finishReason())) {
                 List<Map<String, String>> continuationMessages = new ArrayList<>(messages);
                 continuationMessages.add(message("assistant", streamResult.content()));
                 continuationMessages.add(message("user", CONTINUE_PROMPT));
                 onDelta.accept(System.lineSeparator());
-                chatStreamInternal(model, continuationMessages, onDelta, allowFallback, false);
+                chatStreamInternal(
+                        model,
+                        continuationMessages,
+                        onDelta,
+                        allowFallback,
+                        remainingAutoContinueRounds - 1,
+                        allowTimeoutRetry
+                );
             }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new AssistantException("百炼流式对话被中断: " + ex.getMessage(), ex);
+            throw new AssistantException("百炼流式对话被中断：" + ex.getMessage(), ex);
         } catch (IOException ex) {
             if (allowFallback && isTimeoutException(ex)) {
                 String fallbackModel = properties.getFallbackModel();
                 if (isValidFallbackModel(fallbackModel, model)) {
-                    chatStreamInternal(fallbackModel, messages, onDelta, false, allowAutoContinue);
+                    chatStreamInternal(fallbackModel, messages, onDelta, false, remainingAutoContinueRounds, allowTimeoutRetry);
                     return;
                 }
             }
-            throw new AssistantException("百炼流式对话失败: " + ex.getMessage(), ex);
+            if (allowTimeoutRetry && isTimeoutException(ex)) {
+                chatStreamInternal(model, messages, onDelta, false, remainingAutoContinueRounds, false);
+                return;
+            }
+            throw new AssistantException("百炼流式对话失败：" + ex.getMessage(), ex);
         }
     }
 
@@ -349,7 +395,7 @@ public class BailianClient {
 
     private void requireApiKey() {
         if (properties.getApiKey() == null || properties.getApiKey().isBlank()) {
-            throw new AssistantException("百炼 API Key 缺失，请设置 DASHSCOPE_API_KEY 或 bailian.api-key。");
+            throw new AssistantException("百炼接口密钥缺失，请先完成系统配置。");
         }
     }
 
@@ -382,14 +428,39 @@ public class BailianClient {
     }
 
     private static boolean isTimeoutException(IOException ex) {
-        return ex instanceof HttpTimeoutException
-                || (ex.getMessage() != null && ex.getMessage().toLowerCase().contains("timed out"));
+        if (ex instanceof HttpTimeoutException) {
+            return true;
+        }
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+        String lowered = message.toLowerCase();
+        return lowered.contains("timed out")
+                || lowered.contains("connection reset")
+                || lowered.contains("header parser received no bytes")
+                || lowered.contains("connection closed");
     }
 
     private static boolean isValidFallbackModel(String fallbackModel, String currentModel) {
         return fallbackModel != null
                 && !fallbackModel.isBlank()
                 && !fallbackModel.equalsIgnoreCase(currentModel);
+    }
+
+    private boolean isFallbackModel(String model) {
+        return model != null
+                && properties.getFallbackModel() != null
+                && model.equalsIgnoreCase(properties.getFallbackModel());
+    }
+
+    private static boolean isModelNotFound(String body) {
+        if (body == null || body.isBlank()) {
+            return false;
+        }
+        String text = body.toLowerCase();
+        return text.contains("model_not_found")
+                || text.contains("does not exist or you do not have access");
     }
 
     private static boolean isTruncatedFinishReason(String finishReason) {
@@ -469,7 +540,7 @@ public class BailianClient {
         try {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException ex) {
-            return "<读取错误响应失败>";
+            return "<无法读取错误响应体>";
         }
     }
 
@@ -479,4 +550,5 @@ public class BailianClient {
     private record StreamChatResult(String content, String finishReason) {
     }
 }
+
 

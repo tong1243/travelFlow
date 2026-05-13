@@ -18,6 +18,20 @@
 
 ## 本地启动
 
+### 0）一键启动（推荐）
+
+在仓库根目录执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-project.ps1
+```
+
+或直接双击：
+
+```text
+scripts\start-project.bat
+```
+
 ### 1）启动依赖服务（推荐）
 
 在仓库根目录执行：

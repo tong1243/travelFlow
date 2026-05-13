@@ -31,7 +31,7 @@ foreach ($case in $cases) {
     try {
         $response = Invoke-RestMethod `
             -Method Post `
-            -Uri "$BaseUrl/api/v1/chat/ask" `
+            -Uri "$BaseUrl/api/v1/chat/agent/ask" `
             -Headers $headers `
             -ContentType "application/json" `
             -Body ($payload | ConvertTo-Json -Depth 8)
@@ -73,7 +73,7 @@ $total = @($rows).Count
 $avgScore = if ($total -gt 0) { [math]::Round((($rows | Measure-Object -Property score -Average).Average), 1) } else { 0 }
 
 $sb = New-Object System.Text.StringBuilder
-[void]$sb.AppendLine("# RAG Eval Report")
+[void]$sb.AppendLine("# Agent Eval Report")
 [void]$sb.AppendLine("")
 [void]$sb.AppendLine("- Base URL: $BaseUrl")
 [void]$sb.AppendLine("- Total cases: $total")

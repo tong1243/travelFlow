@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import {
   useTravelApp,
@@ -47,7 +47,11 @@ const {
   createAdminEnterpriseCard,
   updateAdminEnterpriseCard,
   deleteAdminEnterpriseCard,
+  knowledgeSeeding,
+  seedPopularAttractions,
 } = useTravelApp()
+
+const overwritePopularAttractions = ref(false)
 
 const creating = reactive({
   navItem: false,
@@ -329,6 +333,10 @@ async function addEnterprise() {
   }, '已新增企业卡片')
   creating.enterprise = false
 }
+
+async function importPopularAttractionsToSystem() {
+  await seedPopularAttractions(overwritePopularAttractions.value)
+}
 </script>
 
 <template>
@@ -350,6 +358,23 @@ async function addEnterprise() {
           <el-tag type="success" round>管理员专用</el-tag>
         </div>
       </template>
+
+      <el-card shadow="never" class="admin-item-card">
+        <template #header>
+          <strong>系统热门景点知识库</strong>
+        </template>
+        <p>一键导入内置热门景点知识库到系统共享库（写入 Qdrant）。</p>
+        <div class="admin-create-actions">
+          <el-switch
+            v-model="overwritePopularAttractions"
+            active-text="覆盖已存在文档"
+            inactive-text="仅新增文档"
+          />
+          <el-button type="warning" round :loading="knowledgeSeeding" @click="importPopularAttractionsToSystem">
+            导入热门景点知识库
+          </el-button>
+        </div>
+      </el-card>
 
       <el-tabs type="border-card">
         <el-tab-pane label="导航管理">

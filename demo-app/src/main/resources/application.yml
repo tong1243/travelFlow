@@ -36,13 +36,13 @@ spring:
 bailian:
   api-key: ${DASHSCOPE_API_KEY:}
   base-url: ${DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
-  default-model: ${DASHSCOPE_MODEL:qwen-plus}
+  default-model: ${DASHSCOPE_MODEL:qwen3.6-plus}
   file-model: ${DASHSCOPE_FILE_MODEL:qwen-long-latest}
-  fallback-model: ${DASHSCOPE_FALLBACK_MODEL:qwen-flash-latest}
+  fallback-model: ${DASHSCOPE_FALLBACK_MODEL:qwen3.6-plus}
   embedding-model: ${DASHSCOPE_EMBEDDING_MODEL:text-embedding-v3}
   max-tokens: ${DASHSCOPE_MAX_TOKENS:1800}
   connect-timeout-seconds: 8
-  read-timeout-seconds: 90
+  read-timeout-seconds: 180
 
 app:
   cors:
@@ -77,10 +77,53 @@ app:
   rag:
     chunk-size: ${RAG_CHUNK_SIZE:500}
     chunk-overlap: ${RAG_CHUNK_OVERLAP:80}
-    top-k: ${RAG_TOP_K:5}
+    top-k: ${RAG_TOP_K:1}
     context-max-chars: ${RAG_CONTEXT_MAX_CHARS:4000}
     recall-top-k: ${RAG_RECALL_TOP_K:24}
     lexical-pool-size: ${RAG_LEXICAL_POOL_SIZE:300}
     vector-weight: ${RAG_VECTOR_WEIGHT:0.65}
     rerank-coverage-weight: ${RAG_RERANK_COVERAGE_WEIGHT:0.20}
-    agent-max-steps: ${RAG_AGENT_MAX_STEPS:3}
+    agent-max-steps: ${RAG_AGENT_MAX_STEPS:8}
+  prompt:
+    external-dir: ${APP_PROMPT_EXTERNAL_DIR:}
+  flight:
+    enabled: ${APP_FLIGHT_ENABLED:true}
+    domestic-provider: ${APP_FLIGHT_DOMESTIC_PROVIDER:ctrip}
+    international-provider: ${APP_FLIGHT_INTERNATIONAL_PROVIDER:aviationstack}
+    provider: ${APP_FLIGHT_PROVIDER:aviationstack}
+    api-key: ${APP_FLIGHT_API_KEY:ffdef7bb33e83261f8e90740fda9d37e}
+    base-url: ${APP_FLIGHT_BASE_URL:https://api.aviationstack.com/v1/flights}
+    ctrip-base-url: ${APP_FLIGHT_CTRIP_BASE_URL:https://flights.ctrip.com/online/list/oneway-{dep}-{arr}}
+    limit: ${APP_FLIGHT_LIMIT:5}
+    connect-timeout-seconds: ${APP_FLIGHT_CONNECT_TIMEOUT_SECONDS:5}
+    read-timeout-seconds: ${APP_FLIGHT_READ_TIMEOUT_SECONDS:10}
+  train:
+    enabled: ${APP_TRAIN_ENABLED:true}
+    base-url: ${APP_TRAIN_BASE_URL:https://kyfw.12306.cn/otn/leftTicket/query}
+    alternative-base-urls:
+      - ${APP_TRAIN_ALT_BASE_URL_1:https://kyfw.12306.cn/otn/leftTicket/queryG}
+      - ${APP_TRAIN_ALT_BASE_URL_2:https://kyfw.12306.cn/otn/leftTicket/queryO}
+    cookie-bootstrap-enabled: ${APP_TRAIN_COOKIE_BOOTSTRAP_ENABLED:true}
+    bootstrap-url: ${APP_TRAIN_BOOTSTRAP_URL:https://kyfw.12306.cn/otn/leftTicket/init}
+    limit: ${APP_TRAIN_LIMIT:6}
+    connect-timeout-seconds: ${APP_TRAIN_CONNECT_TIMEOUT_SECONDS:5}
+    read-timeout-seconds: ${APP_TRAIN_READ_TIMEOUT_SECONDS:12}
+  hotel:
+    enabled: ${APP_HOTEL_ENABLED:true}
+    provider: ${APP_HOTEL_PROVIDER:overpass}
+    geocode-url: ${APP_HOTEL_GEOCODE_URL:https://geocoding-api.open-meteo.com/v1/search}
+    overpass-url: ${APP_HOTEL_OVERPASS_URL:https://overpass-api.de/api/interpreter}
+    radius-meters: ${APP_HOTEL_RADIUS_METERS:6000}
+    limit: ${APP_HOTEL_LIMIT:6}
+    connect-timeout-seconds: ${APP_HOTEL_CONNECT_TIMEOUT_SECONDS:5}
+    read-timeout-seconds: ${APP_HOTEL_READ_TIMEOUT_SECONDS:12}
+  web-search:
+    enabled: ${APP_WEB_SEARCH_ENABLED:true}
+    provider: ${APP_WEB_SEARCH_PROVIDER:baidu}
+    base-url: ${APP_WEB_SEARCH_BASE_URL:https://www.baidu.com/s}
+    fallback-provider: ${APP_WEB_SEARCH_FALLBACK_PROVIDER:duckduckgo}
+    fallback-base-url: ${APP_WEB_SEARCH_FALLBACK_BASE_URL:https://api.duckduckgo.com/}
+    limit: ${APP_WEB_SEARCH_LIMIT:5}
+    min-rerank-score: ${APP_WEB_SEARCH_MIN_RERANK_SCORE:0.08}
+    connect-timeout-seconds: ${APP_WEB_SEARCH_CONNECT_TIMEOUT_SECONDS:3}
+    read-timeout-seconds: ${APP_WEB_SEARCH_READ_TIMEOUT_SECONDS:5}

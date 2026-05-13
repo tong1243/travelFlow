@@ -9,7 +9,7 @@ public class BailianProperties {
     private String baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
     private String defaultModel = "qwen3.6-plus";
     private String fileModel = "qwen-long-latest";
-    private String fallbackModel = "qwen-flash-latest";
+    private String fallbackModel = "qwen3.6-plus";
     private String embeddingModel = "text-embedding-v3";
     private Integer maxTokens = 1800;
     private int connectTimeoutSeconds = 10;

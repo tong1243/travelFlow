@@ -23,6 +23,11 @@ import java.util.Map;
 
 @Configuration
 @EnableMethodSecurity
+/**
+ * SecurityConfig类。
+ * 该类型负责认证授权与访问控制，保障系统安全边界。
+ * 注释以中文详细描述职责边界，便于团队协作、排障与后续维护。
+ */
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -30,6 +35,15 @@ public class SecurityConfig {
     private final ApiAccessLogFilter apiAccessLogFilter;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 构造并初始化 SecurityConfig 对象。
+     * 该构造方法用于注入运行所需依赖，保证对象创建后即可参与完整流程。
+     * 该方法用于认证授权处理，确保访问链路符合安全策略。
+     * @param jwtAuthenticationFilter 输入参数 jwtAuthenticationFilter，用于参与本次处理流程。
+     * @param apiRateLimitFilter 输入参数 apiRateLimitFilter，用于参与本次处理流程。
+     * @param apiAccessLogFilter 输入参数 apiAccessLogFilter，用于参与本次处理流程。
+     * @param objectMapper 输入参数 objectMapper，用于参与本次处理流程。
+     */
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           ApiRateLimitFilter apiRateLimitFilter,
                           ApiAccessLogFilter apiAccessLogFilter,
@@ -41,6 +55,13 @@ public class SecurityConfig {
     }
 
     @Bean
+    /**
+     * 执行 securityFilterChain 业务处理。
+     * 该方法会结合输入参数完成当前步骤，并按约定输出处理结果。
+     * 该方法用于认证授权处理，确保访问链路符合安全策略。
+     * @param http 输入参数 http，用于参与本次处理流程。
+     * @return 返回当前步骤处理结果；无有效结果时返回实现约定的空值或默认值。
+     */
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -49,6 +70,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                         .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+                        .requestMatchers("/api/v1/map/route-plan").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/travel/**").authenticated()
                         .requestMatchers("/api/portal/spot-plan/**").authenticated()
@@ -68,10 +90,24 @@ public class SecurityConfig {
     }
 
     @Bean
+    /**
+     * 执行 passwordEncoder 业务处理。
+     * 该方法会结合输入参数完成当前步骤，并按约定输出处理结果。
+     * 该方法用于认证授权处理，确保访问链路符合安全策略。
+     * @return 返回当前步骤处理结果；无有效结果时返回实现约定的空值或默认值。
+     */
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * 执行 writeError 业务处理。
+     * 该方法会结合输入参数完成当前步骤，并按约定输出处理结果。
+     * 该方法用于认证授权处理，确保访问链路符合安全策略。
+     * @param response 输入参数 response，用于参与本次处理流程。
+     * @param status 输入参数 status，用于参与本次处理流程。
+     * @param message 输入参数 message，用于参与本次处理流程。
+     */
     private void writeError(HttpServletResponse response, int status, String message) {
         try {
             if (response.isCommitted()) {
